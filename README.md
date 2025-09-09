@@ -4,6 +4,10 @@ This project creates a generic TAP server
 
 This project uses Quarkus, If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
+> [!IMPORTANT]
+> it is expected that [ivoacore](https://github.com/Javastro/ivoacore) be checked out in a sibling directory whilst the APIs to ivoacore are still in flux and the packages are not published
+
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
