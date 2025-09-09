@@ -4,6 +4,8 @@ This project creates a generic TAP server
 
 This project uses Quarkus, If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
+[![Java CI with Gradle](https://github.com/Javastro/TAPServer/actions/workflows/gradle.yml/badge.svg)](https://github.com/Javastro/TAPServer/actions/workflows/gradle.yml)
+
 > [!IMPORTANT]
 > it is expected that [ivoacore](https://github.com/Javastro/ivoacore) be checked out in a sibling directory whilst the APIs to ivoacore are still in flux and the packages are not published
 
