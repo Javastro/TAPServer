@@ -34,6 +34,12 @@ jobs:
         repository: javastro/ivoacore
         path: ivoacore
 
+    - name: Checkout ivoacore
+      uses: actions/checkout@v4
+      with:
+        repository: javastro/DemoModel
+        path: demoModel
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -46,7 +52,11 @@ jobs:
         build-root-directory: main
         cache-disabled: true
         cache-overwrite-existing: true
-    - name: Run Gradle build
+    - name: Run demo model Gradle build
+      working-directory: ./demoModel
+      run: ./gradlew publishtomavenlocal
+
+    - name: Run main Gradle build
       working-directory: ./main
       run: ./gradlew -U build -x test -Dquarkus.container-image.builder=none
 
