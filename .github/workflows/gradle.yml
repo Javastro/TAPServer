@@ -47,14 +47,14 @@ jobs:
         distribution: 'temurin'
         
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v3
+      uses: gradle/actions/setup-gradle@v4
       with:
         build-root-directory: main
         cache-disabled: true
         cache-overwrite-existing: true
     - name: Run demo model Gradle build
       working-directory: ./demoModel
-      run: ./gradlew publishtomavenlocal
+      run: ./gradlew -x test clean  publishtomavenlocal
 
     - name: Run main Gradle build
       working-directory: ./main
