@@ -50,7 +50,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v4
       with:
         build-root-directory: main
-        cache-disabled: true
+        cache-disabled: false
         cache-overwrite-existing: true
     - name: Run demo model Gradle build
       working-directory: ./demoModel
