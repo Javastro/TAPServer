@@ -16,5 +16,13 @@ class VOSIResourceTest {
              .statusCode(200)
              ;//TODO test return
     }
+   @Test
+   void testTablesEndpoint() {
+      given()
+            .when().get("/tables")
+            .then()
+            .statusCode(200)
+      ;//TODO test return
+   }
 
 }
