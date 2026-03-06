@@ -23,23 +23,23 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
 
 /**
- * Main TAP Query.
+ * Main Async TAP Query.
  * Created on 04/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
  */
 @Tag(name="TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
-@Path("/sync")
-public class QueryResource {
+@Path("/async")
+public class AsyncQueryResource {
+   //IMPL the two query endpoints are in different resources for routing purposes.
 
    @Inject
    JobManager jobmanager;
 
-    @GET
-    public Response sync(@RestQuery String query,  @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
-                         @RestQuery String upload) {
-       //TODO create a job and run it in a way that allows for it to be interrupted after shortish time, so sync request times out, but allows job to continue running - return error that indicates where the job is....
-       return Response.status(500,"Not yet implemented").build();
+    @POST
+    public Response async(@RestForm String query, @RestForm String lang, @RestForm String responseformat, @RestForm Long maxrec, @RestForm String runid,
+                          @RestForm String upload, @Context UriInfo uriInfo) throws UWSException {
+       BaseUWSJob job = jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
+       return Response.seeOther(uriInfo.getAbsolutePathBuilder()
+             .path(job.getID()).build()).build();
     }
-
-
 }

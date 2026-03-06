@@ -28,6 +28,7 @@ dependencies {
     implementation("io.quarkus:quarkus-rest")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
+    testImplementation("org.awaitility:awaitility:4.3.0")
 }
 
 group = "org.javastro.ivoa.servers"
