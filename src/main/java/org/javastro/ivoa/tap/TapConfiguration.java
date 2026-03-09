@@ -21,8 +21,10 @@ import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.schema.SchemaProvider;
 import org.javastro.ivoacore.tap.schema.VODMLSchemaProvider;
 import org.javastro.ivoacore.uws.JobManager;
+import org.javastro.ivoacore.uws.environment.DefaultEnvironmentFactory;
 import org.javastro.ivoacore.uws.environment.DefaultExecutionEnvironment;
 import org.javastro.ivoacore.uws.environment.DefaultExecutionPolicy;
+import org.javastro.ivoacore.uws.environment.EnvironmentFactory;
 import org.javastro.ivoacore.uws.persist.MemoryBasedJobStore;
 import org.javastro.ivoacore.vosi.CapabilityBuilder;
 import org.javastro.ivoacore.vosi.VOSIProvider;
@@ -94,9 +96,9 @@ public class TapConfiguration {
          throw new RuntimeException("temporary directory not available",e);
       }
 
-      DefaultExecutionEnvironment env = new DefaultExecutionEnvironment(tmpdir);
+      EnvironmentFactory env = new DefaultEnvironmentFactory(tmpdir);
       MemoryBasedJobStore store = new MemoryBasedJobStore();
       DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
-      return new JobManager(env, new TAPJob.JobFactory(ds),store,policy);
+      return new JobManager(new TAPJob.JobFactory(ds, schema(), env),store,policy);//FIXME creation ordering of schema()
    }
 }
