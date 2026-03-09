@@ -23,7 +23,7 @@ dependencyResolutionManagement {
         }
         //TODO - Vollt TAP dependencies from our repo (updated to Jakarta)
         maven {
-            url= uri("https://repo.dev.uksrc.org/repository/maven-snapshots/")
+            url= uri("https://repo.dev.uksrc.org/repository/maven-public/")
         }
     }
 }
