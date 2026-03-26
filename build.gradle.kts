@@ -13,8 +13,9 @@ dependencies {
     implementation("org.javastro.ivoa.core:tap")
     implementation("org.javastro.ivoa.core:dal")
     implementation("org.javastro.ivoa.core:pgsphere")
-    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT")
-    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT:test")
+    //cannot include the demo when including the above because of classloader problems
+//    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT")
+//    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT:test")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-rest-jaxb")
     implementation("io.quarkus:quarkus-kubernetes")
