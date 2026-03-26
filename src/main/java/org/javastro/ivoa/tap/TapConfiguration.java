@@ -13,7 +13,6 @@ import jakarta.inject.Singleton;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.javastro.ivoa.entities.resource.AccessURL;
 import org.javastro.ivoa.entities.resource.Capability;
-import org.javastro.ivoa.entities.resource.ServiceInterface;
 import org.javastro.ivoa.entities.resource.dataservice.ParamHTTP;
 import org.javastro.ivoa.entities.resource.tap.TableAccess;
 import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
@@ -22,7 +21,6 @@ import org.javastro.ivoacore.tap.schema.SchemaProvider;
 import org.javastro.ivoacore.tap.schema.VODMLSchemaProvider;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.environment.DefaultEnvironmentFactory;
-import org.javastro.ivoacore.uws.environment.DefaultExecutionEnvironment;
 import org.javastro.ivoacore.uws.environment.DefaultExecutionPolicy;
 import org.javastro.ivoacore.uws.environment.EnvironmentFactory;
 import org.javastro.ivoacore.uws.persist.MemoryBasedJobStore;
@@ -48,6 +46,9 @@ public class TapConfiguration {
 
    @Inject
    DataSource ds;
+
+   @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "false")
+   boolean isDbCaseSensitive;
 
 
    @Produces
@@ -81,7 +82,7 @@ public class TapConfiguration {
    @Produces
    @Singleton
    SchemaProvider schema(){
-      return new VODMLSchemaProvider(tapSchemaResource);
+      return new VODMLSchemaProvider(tapSchemaResource, isDbCaseSensitive);
    }
 
    @Produces
