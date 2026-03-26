@@ -7,6 +7,7 @@ package org.javastro.ivoa.tap;
 
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 /*
@@ -57,32 +59,55 @@ public class QueryTest {
             .then()
             .statusCode(303);
 
-      // Poll until COMPLETED
-      await().atMost(Duration.ofSeconds(10))
+      // Poll until
+      await().atMost(Duration.ofSeconds(2))
             .pollInterval(Duration.ofMillis(500))
             .untilAsserted(() -> {
                given()
                      .when().get(jobUrl + "/phase")
                      .then()
                      .statusCode(200)
-                     .body(containsString("COMPLETED"));
-            });
-
-      // Retrieve Results
-      given()
-            .when().get(jobUrl + "/results")
+                     .body(not(comparesEqualTo("RUNNING")));
+            })
+            ;
+      String status = given()
+            .when().get(jobUrl + "/phase")
             .then()
-            .log().ifValidationFails(LogDetail.BODY)
             .statusCode(200)
-            .body("results.result.size()", greaterThan(0));
+            .extract().body().asString();
+      if (status.equals("ERROR"))
+      {
 
-      //retrieve the actual result
-      given()
-            .when().get(jobUrl + "/results/result")
-            .then()
-            .statusCode(200);
-      //TODO get the result into a file and verify that it is an OK VOTable.
+       given()
+             .when().get(jobUrl + "/error")
+             .then()
+             .statusCode(200)
+             .log().body();
+       fail("Job ended in error state");
+
+      }
+      else if (status.equals("COMPLETED")) {
 
 
+         // Retrieve Results
+         given()
+               .when().get(jobUrl + "/results")
+               .then()
+               .log().ifValidationFails(LogDetail.BODY)
+               .statusCode(200)
+               .body("results.result.size()", greaterThan(0));
+
+         //retrieve the actual result
+         given()
+               .when().get(jobUrl + "/results/result")
+               .then()
+               .statusCode(200);
+         //TODO get the result into a file and verify that it is an OK VOTable.
+
+      }
+       else
+      {
+         fail("Unexpected job status "+status);
+      }
    }
 }
