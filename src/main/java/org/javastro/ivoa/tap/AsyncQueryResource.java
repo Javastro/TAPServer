@@ -11,16 +11,20 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.javastro.ivoa.entities.uws.Results;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.uws.BaseUWSJob;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.UWSException;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
+import org.jboss.resteasy.reactive.RestResponse;
 
 /**
  * Main Async TAP Query.
@@ -42,4 +46,16 @@ public class AsyncQueryResource {
        return Response.seeOther(uriInfo.getAbsolutePathBuilder()
              .path(job.getID()).build()).build();
     }
+
+   @GET
+   @Path("/{jobid}/results/result")
+   public RestResponse<java.nio.file.Path> getVotable(@PathParam("jobid") String jobid) throws UWSException {
+     //FIXME this needs to be refactored to be generalize - it knows too much about the internal workings - particularly that the result is stored in local file - that is also being exposed in the results job structure at the moment
+      String res = jobmanager.getJobResults(jobid).stream().filter(r -> r.getId().equals("result")).findFirst().orElseThrow(() -> new UWSException("No result with id 'result'")).getValue();
+      java.nio.file.Path path = java.nio.file.Path.of(res);
+      return RestResponse.ResponseBuilder.ok(path)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "some-file-name")
+            .build();
+   }
+
 }

@@ -38,7 +38,7 @@ public class QueryResource {
     public Response sync(@RestQuery String query,  @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                          @RestQuery String upload) {
        //TODO create a job and run it in a way that allows for it to be interrupted after shortish time, so sync request times out, but allows job to continue running - return error that indicates where the job is....
-       return Response.status(500,"Not yet implemented").build();
+       return Response.status(501,"Not yet implemented").build();
     }
 
 
