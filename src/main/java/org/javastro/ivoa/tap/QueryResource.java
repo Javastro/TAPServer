@@ -20,14 +20,12 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.javastro.ivoa.entities.uws.ExecutionPhase;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
+import org.javastro.ivoacore.tap.TAPWriter;
 import org.javastro.ivoacore.uws.UWSException;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
 import uk.ac.starlink.table.ColumnInfo;
-import uk.ac.starlink.table.DefaultValueInfo;
-import uk.ac.starlink.table.DescribedValue;
 import uk.ac.starlink.table.RowListStarTable;
-import uk.ac.starlink.votable.VOTableWriter;
 
 import java.time.Duration;
 
@@ -90,7 +88,7 @@ public class QueryResource  extends BaseTAPResource {
                )
                .ifNoItem().after(SYNC_WAIT)
                .recoverWithItem(
-                     buildErrorVOTable(job, new UWSException("query did not complete within sync time limit of " + SYNC_WAIT.toSeconds() + " seconds"), uriInfo)
+                     buildErrorVOTable(job, new UWSException("query did not complete within sync time limit of " + SYNC_WAIT.toSeconds() + " seconds - continuing as UWS job"), uriInfo)//FIXME should this return http error code - if so which code?
                );
 
       }).runSubscriptionOn(Infrastructure.getDefaultExecutor());
@@ -115,38 +113,20 @@ public class QueryResource  extends BaseTAPResource {
       final String errorMessage = exception.getMessage() == null ? "Unknown error" : exception.getMessage();
 
       try {
+
+         final TAPWriter tableWriter = new TAPWriter(job);;
          ColumnInfo[] columns = new ColumnInfo[]{
                new ColumnInfo("ERROR", String.class, "TAP error message")
          };
          RowListStarTable table = new RowListStarTable(columns);
          table.setName("results");
          table.addRow(new Object[]{errorMessage});
-
-
-         table.setParameter(new DescribedValue(
-               new DefaultValueInfo("QUERY_STATUS", String.class, "TAP query status"),
-               "TIMEOUT"));
-         table.setParameter(new DescribedValue(
-               new DefaultValueInfo("QUERY_STATUS_MESSAGE", String.class, "TAP error message"),
-               errorMessage));
-         table.setParameter(new DescribedValue(
-               new DefaultValueInfo("QUERY", String.class, "Original ADQL query"),
-               tapJobSpec.getAdqlQuery()
-         ));
-
-         table.setParameter(new DescribedValue(
-               new DefaultValueInfo("RUNID", String.class, "TAP run identifier"),
-               tapJobSpec.getRunId()
-         ));
-         table.setParameter(new DescribedValue(
-               new DefaultValueInfo("JOBURL", String.class, "Underlying TAP job URL"),
-               asyncJobUri(uriInfo, job.getID()).toString()
-         ));
-
+         tableWriter.setTimeoutInfo(asyncJobUri(uriInfo, job.getID()));
 
          java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("error", ".vot");
          try (java.io.OutputStream out = java.nio.file.Files.newOutputStream(tempFile)) {
-            new VOTableWriter().writeStarTable(table, out);
+
+            tableWriter.writeStarTable(table, out);
          }
          return tempFile;
       } catch (java.io.IOException e) {

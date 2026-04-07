@@ -121,4 +121,15 @@ public class QueryTest {
             .log().body()
             .statusCode(200); //TODO validate the VOTable
    }
+   @Test
+   public void testErrorQuery() {
+      given()
+            .formParam("query", "select * from TAP_SCHEMA.column") //FIXME this is not returning a VOTable...
+            .when().post(SYNC_ENDPOINT)
+            .then()
+            .log().body()
+            .statusCode(200); //TODO validate the VOTable
+   }
+
+
 }
