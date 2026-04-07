@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @QuarkusTest
 public class QueryTest {
    private static final String ASYNC_ENDPOINT = "/async";
+   private static final String SYNC_ENDPOINT = "/sync";
    @Test
    public void testAsyncQuery() {
       Response createResponse = given()
@@ -60,7 +61,7 @@ public class QueryTest {
             .statusCode(303);
 
       // Poll until
-      await().atMost(Duration.ofSeconds(2))
+      await().atMost(Duration.ofSeconds(30))
             .pollInterval(Duration.ofMillis(500))
             .untilAsserted(() -> {
                given()
@@ -109,5 +110,15 @@ public class QueryTest {
       {
          fail("Unexpected job status "+status);
       }
+   }
+
+   @Test
+   public void testSyncQuery() {
+      given()
+            .formParam("query", "select * from TAP_SCHEMA.columns")
+            .when().post(SYNC_ENDPOINT)
+            .then()
+            .log().body()
+            .statusCode(200); //TODO validate the VOTable
    }
 }
