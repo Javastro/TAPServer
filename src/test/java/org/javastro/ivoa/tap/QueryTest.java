@@ -112,6 +112,41 @@ public class QueryTest {
       }
    }
 
+
+   @Test
+   public void testAbortJob(){
+      Response createResponse = given()
+            .formParam("query", "select * from TAP_SCHEMA.schemas")
+            .redirects().follow(false)
+            .when().post(ASYNC_ENDPOINT)
+            .then()
+            .statusCode(303)
+            .header("Location", notNullValue())
+            .extract().response();
+      String jobFullUrl = createResponse.getHeader("Location");
+      String jobId = jobFullUrl.substring(jobFullUrl.lastIndexOf('/') + 1);
+
+      System.out.println(jobFullUrl);
+      String jobUrl = ASYNC_ENDPOINT+"/"+jobId;
+      //Verify Initial State (PENDING)
+      given()
+            .when().get(jobUrl)
+            .then()
+            .statusCode(200)
+            .body("job.phase", equalTo("PENDING"));
+
+      //  Start the Job (POST to /phase with PHASE=RUN)
+      given()
+            .contentType(ContentType.URLENC)
+            .redirects().follow(false)
+            .formParam("PHASE", "ABORT")
+            .when()
+            .post(jobUrl + "/phase")
+            .then()
+            .statusCode(303);
+
+   }
+
    @Test
    public void testSyncQuery() {
       given()
