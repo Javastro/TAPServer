@@ -79,16 +79,21 @@ public class QueryResource  extends BaseTAPResource {
 
          return Uni.createFrom().completionStage(job.getJobFuture())
                .onItem().transformToUni(phase -> {
-                        if (phase == ExecutionPhase.COMPLETED)
+                        if (phase == ExecutionPhase.COMPLETED) {
                            return successResponse(job);
+                        }
+                        else if (phase == ExecutionPhase.ERROR)
+                        {
+                           return Uni.createFrom().item( buildErrorVOTable(job,null,uriInfo, false));
+                        }
                         else {
-                           return Uni.createFrom().failure(new UWSException("Underlying TAP job completed with phase " + phase));//TODO could do more sophisticated error handling here based on the phase
+                           return Uni.createFrom().failure(new UWSException("Underlying TAP job completed with unexpected phase " + phase));//TODO could do more sophisticated error handling here based on the phase
                         }
                      }
                )
                .ifNoItem().after(SYNC_WAIT)
                .recoverWithItem(
-                     buildErrorVOTable(job, new UWSException("query did not complete within sync time limit of " + SYNC_WAIT.toSeconds() + " seconds - continuing as UWS job"), uriInfo)//FIXME should this return http error code - if so which code?
+                     buildErrorVOTable(job, new UWSException("query did not complete within sync time limit of " + SYNC_WAIT.toSeconds() + " seconds - continuing as UWS job"), uriInfo, true)//FIXME should this return http error code - if so which code?
                );
 
       }).runSubscriptionOn(Infrastructure.getDefaultExecutor());
@@ -106,22 +111,24 @@ public class QueryResource  extends BaseTAPResource {
 
    //TODO do we always want to return a VOTable even for errors? Or should we allow some other error response?
    //TODO perhaps some of this can be moved to the TAPJob itself (for dealing with other types of errors - e.g. failure to parse original query)
-   protected java.nio.file.Path buildErrorVOTable(TAPJob job, UWSException exception, UriInfo uriInfo) {
+   protected java.nio.file.Path buildErrorVOTable(TAPJob job, UWSException exception, UriInfo uriInfo, boolean timeout) {
       // create a VOTable with STIL that has the error message and return the path to it. We could also include some info from the job if we have it.
 
       TAPJobSpecification tapJobSpec = (TAPJobSpecification) job.getJobSpecification();
-      final String errorMessage = exception.getMessage() == null ? "Unknown error" : exception.getMessage();
-
       try {
 
-         final TAPWriter tableWriter = new TAPWriter(job);;
+         final TAPWriter tableWriter = new TAPWriter(job);
          ColumnInfo[] columns = new ColumnInfo[]{
                new ColumnInfo("ERROR", String.class, "TAP error message")
          };
          RowListStarTable table = new RowListStarTable(columns);
-         table.setName("results");
-         table.addRow(new Object[]{errorMessage});
-         tableWriter.setTimeoutInfo(asyncJobUri(uriInfo, job.getID()));
+         table.setName("error");
+         if(exception != null) {
+            table.addRow(new Object[]{exception.getMessage()});
+         }
+         if(timeout) {
+            tableWriter.setTimeoutInfo(asyncJobUri(uriInfo, job.getID()));
+         }
 
          java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("error", ".vot");
          try (java.io.OutputStream out = java.nio.file.Files.newOutputStream(tempFile)) {
