@@ -55,8 +55,8 @@ public class QueryResource  extends BaseTAPResource {
    }
    @POST
    @Produces("application/x-votable+xml")
-   public Uni<java.nio.file.Path> syncPost(@RestForm String query, @RestForm String lang, @RestForm String responseformat, @RestForm Long maxrec, @RestForm String runid,
-                                           @RestForm String upload,
+   public Uni<java.nio.file.Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
+                                           @RestForm("UPLOAD") String upload,
                                            @Context UriInfo uriInfo) {
       return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
 
