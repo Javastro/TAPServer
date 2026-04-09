@@ -11,10 +11,7 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.javastro.ivoa.entities.resource.AccessURL;
 import org.javastro.ivoa.entities.resource.Capability;
-import org.javastro.ivoa.entities.resource.dataservice.ParamHTTP;
-import org.javastro.ivoa.entities.resource.tap.TableAccess;
 import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.schema.SchemaProvider;
@@ -50,31 +47,27 @@ public class TapConfiguration {
    @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "false")
    boolean isDbCaseSensitive;
 
+   @ConfigProperty(name="ivoa.baseAddress", defaultValue = "http://localhost:8080/")
+   URL baseUrl;
+
 
    @Produces
    @Singleton
-   VOSIProvider vosi(){
+   VOSIProvider vosi() {
       return new VOSIProvider() {
          @Override
          public Capabilities getCapabilities() {
-            final URL url;
+            URL url = null;
             try {
-               url = new URL("https://localhost/me"); // FIXME get the real endpoint....
-            } catch (MalformedURLException e) {
-               throw new RuntimeException(e);
-            }
-            // standard VOSI ones
-            final List<Capability> capabilities = CapabilityBuilder.createCapabilities(url);
-            //then the TAP one
-            ParamHTTP intf = ParamHTTP.builder().withVersion("1.1").build();//TODO add all the parameters
+               url = new URL(baseUrl, "VOSI");//IMPL - this needs to be the same as the root in {@see org.javastro.ivoa.tap.VOSIResource }
+               // standard VOSI ones
+               final List<Capability> capabilities = CapabilityBuilder.createVOSICapabilities(url);
+               capabilities.addAll(CapabilityBuilder.createTAPCapabilities(baseUrl));
 
-            capabilities.add(TableAccess.builder().withStandardID("ivo://ivoa.net/std/TAP")
-                  .withInterfaces(
-                     List.of(intf.newCopyBuilder().addAccessURLs(new AccessURL("sync","full")).build(),
-                             intf.newCopyBuilder().addAccessURLs(new AccessURL("async","full")).build())
-                  )
-                  .build());//FIXME really create these - try to factor out common behaviour rather than just creating manually.
-            return Capabilities.builder().addCapabilities(capabilities).build();
+               return Capabilities.builder().addCapabilities(capabilities).build();
+            } catch (MalformedURLException e) {
+               throw new RuntimeException("base URL is malformed", e);
+            }
          }
       };
    }
