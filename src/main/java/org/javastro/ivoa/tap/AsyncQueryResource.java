@@ -28,14 +28,11 @@ import org.jboss.resteasy.reactive.RestResponse;
 @Path("/async")
 public class AsyncQueryResource extends BaseTAPResource {
    //IMPL the two query endpoints are in different resources for routing purposes.
-
-
     @POST
     public Response async(@RestForm String query, @RestForm String lang, @RestForm String responseformat, @RestForm Long maxrec, @RestForm String runid,
                           @RestForm String upload, @Context UriInfo uriInfo) throws UWSException {
        BaseUWSJob job = jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
-       return Response.seeOther(uriInfo.getAbsolutePathBuilder()
-             .path(job.getID()).build()).build();
+       return Response.seeOther(asyncJobUri(job.getID())).build();
     }
 
    @GET
