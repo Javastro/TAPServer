@@ -50,6 +50,7 @@ class VOSIResourceTest {
             .when().get("/tables")
             .then()
             .statusCode(200)
+            .log().body()
       ;//TODO test return
    }
 

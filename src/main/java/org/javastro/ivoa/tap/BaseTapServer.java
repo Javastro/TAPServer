@@ -8,14 +8,9 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.javastro.ivoacore.tap.schema.SchemaProvider;
-import org.javastro.ivoacore.vosi.VOSIProvider;
-import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URL;
 
 /*
  * Created on 28/08/2025 by Paul Harrison (paul.harrison@manchester.ac.uk).
