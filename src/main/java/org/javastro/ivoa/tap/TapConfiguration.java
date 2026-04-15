@@ -93,19 +93,18 @@ public class TapConfiguration {
 
    @Produces
    @Singleton
-   JobManager  uws() {
-
+   JobManager uws(SchemaProvider schemaProvider) {
 
       File tmpdir = null;
       try {
          tmpdir = Files.createTempDirectory("tapserver").toFile();
       } catch (IOException e) {
-         throw new RuntimeException("temporary directory not available",e);
+         throw new RuntimeException("temporary directory not available", e);
       }
 
       EnvironmentFactory env = new DefaultEnvironmentFactory(tmpdir);
       MemoryBasedJobStore store = new MemoryBasedJobStore();
       DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
-      return new JobManager(new TAPJob.JobFactory(ds, schema(), env),store,policy);//FIXME creation ordering of schema()
+      return new JobManager(new TAPJob.JobFactory(ds, schemaProvider, env), store, policy);
    }
 }
