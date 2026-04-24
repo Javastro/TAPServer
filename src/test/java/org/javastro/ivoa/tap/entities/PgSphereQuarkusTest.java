@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 import org.javastro.ivoacore.pgsphere.types.Point;
 
 @QuarkusTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PgSphereQuarkusTest {
     @Inject
     EntityManager em;
@@ -41,7 +42,7 @@ public class PgSphereQuarkusTest {
 
         obj.location = new Point(location);
 
-    //    obj.el = el;
+        obj.el = el;
 
         obj.circle = circle;
 
