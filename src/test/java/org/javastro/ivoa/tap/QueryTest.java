@@ -31,7 +31,7 @@ public class QueryTest {
    @Test
    public void testAsyncQuery() {
       Response createResponse = given()
-            .formParam("query", "select * from TAP_SCHEMA.schemas")
+            .formParam("QUERY", "select * from TAP_SCHEMA.schemas")
             .redirects().follow(false)
             .when().post(ASYNC_ENDPOINT)
             .then()
@@ -116,7 +116,7 @@ public class QueryTest {
    @Test
    public void testAbortJob(){
       Response createResponse = given()
-            .formParam("query", "select * from TAP_SCHEMA.schemas")
+            .formParam("QUERY", "select * from TAP_SCHEMA.schemas")
             .redirects().follow(false)
             .when().post(ASYNC_ENDPOINT)
             .then()
@@ -150,7 +150,7 @@ public class QueryTest {
    @Test
    public void testSyncQuery() {
       given()
-            .formParam("query", "select * from TAP_SCHEMA.columns")
+            .formParam("QUERY", "select * from TAP_SCHEMA.columns")
             .when().post(SYNC_ENDPOINT)
             .then()
             .log().body()
@@ -159,7 +159,7 @@ public class QueryTest {
    @Test
    public void testErrorQuery() {
       given()
-            .formParam("query", "select * from TAP_SCHEMA.column") //FIXME this is not returning a VOTable...
+            .formParam("QUERY", "select * from TAP_SCHEMA.column") //FIXME this is not returning a VOTable...
             .when().post(SYNC_ENDPOINT)
             .then()
             .log().body()

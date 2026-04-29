@@ -19,6 +19,9 @@ dependencies {
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-rest-jaxb")
     implementation("io.quarkus:quarkus-kubernetes")
+    implementation("io.quarkus:quarkus-kubernetes-config") // possibly not necessary https://quarkus.io/guides/kubernetes-config has alternative
+    implementation("io.quarkiverse.helm:quarkus-helm:1.2.6")
+    implementation("io.quarkus:quarkus-container-image-docker")
     implementation("io.quarkus:quarkus-rest-jsonb")
     implementation("io.quarkus:quarkus-smallrye-openapi")
 //    implementation("io.quarkus:quarkus-reactive-pg-client")  // reactive client does not inject entitymanager
