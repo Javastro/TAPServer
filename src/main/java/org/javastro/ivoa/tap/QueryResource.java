@@ -9,6 +9,7 @@ package org.javastro.ivoa.tap;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -41,6 +42,9 @@ import java.time.Duration;
 @Path("/sync")
 public class QueryResource  extends BaseTAPResource {
 
+   @Inject
+   UWSService uwsService;
+
    @ConfigProperty(name="ivoa.tap.sync-timeout-seconds", defaultValue = "5")
    int syncTimeoutSeconds;
 
@@ -68,11 +72,11 @@ public class QueryResource  extends BaseTAPResource {
       return Uni.createFrom().deferred(() -> {
          final TAPJob job;
          try {
-            job = (TAPJob) jobmanager.createJob(
+            job = (TAPJob) uwsService.createJob(
                   new TAPJobSpecification(query, lang, responseformat, maxrec, runid, upload)
             );
 
-            jobmanager.runJob(job.getID()); // automatically run the job
+            uwsService.runJob(job.getID()); // automatically run the job
          } catch (UWSException e) {
             return Uni.createFrom().failure(e);
          }
