@@ -7,6 +7,8 @@ package org.javastro.ivoa.tap;
 
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -26,13 +28,18 @@ import org.jboss.resteasy.reactive.RestResponse;
 @Tag(name="TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
 @Path("/async")
+@Transactional
 public class AsyncQueryResource extends BaseTAPResource {
+
+    @Inject
+    UWSService uwsService;
+
    //IMPL the two query endpoints are in different resources for routing purposes.
     @POST
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                           @RestForm("UPLOAD") String upload, @Context UriInfo uriInfo) throws UWSException {
-       BaseUWSJob job = jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
+       BaseUWSJob job = uwsService.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
        return Response.seeOther(asyncJobUri(job.getID())).build();
     }
 

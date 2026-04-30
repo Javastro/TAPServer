@@ -8,12 +8,17 @@ package org.javastro.ivoa.tap.quarkus;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.javastro.ivoa.entities.uws.ExecutionPhase;
+import org.javastro.ivoa.tap.UWSService;
 import org.javastro.ivoacore.common.ServiceLocator;
 import org.javastro.ivoacore.uws.JobManager;
+import org.javastro.ivoacore.uws.UWSException;
 import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
 
 /*
@@ -28,6 +33,9 @@ public class UWSResource extends BaseUWSResource {
 
    @Inject
    ServiceLocator serviceLocator;
+
+   @Inject
+   UWSService uwsService;
 
    @Override
    protected JobManager getJobManager() {
@@ -44,5 +52,23 @@ public class UWSResource extends BaseUWSResource {
       }
       return Response.seeOther(urib
             .build()).build();
+   }
+
+   @Override
+   public Response setPhase(@PathParam("jobid") String jobid, @FormParam("PHASE") String phase) throws UWSException {
+      ExecutionPhase newphase = uwsService.setPhase(jobid, phase);  // Use uwsService
+      return redirectToJob(jobid);
+   }
+
+   @Override
+   public Response deleteJob(@PathParam("jobid") String jobid) throws UWSException {
+      boolean success = uwsService.deleteJob(jobid);  // Use uwsService
+      if (success) {
+         return redirectToJob(null);
+      } else {
+         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                 .entity("Failed to delete job " + jobid)
+                 .build();
+      }
    }
 }
