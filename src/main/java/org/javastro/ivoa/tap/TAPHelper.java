@@ -7,6 +7,7 @@ package org.javastro.ivoa.tap;
 
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
@@ -16,9 +17,10 @@ import org.javastro.ivoacore.uws.UWSException;
 
 import java.net.URI;
 
-public abstract class BaseTAPResource {
+@Singleton
+public class TAPHelper {
    @Inject
-   protected JobManager jobmanager;
+   JobManager jobmanager;
 
    @Inject
    ServiceLocator serviceLocator;

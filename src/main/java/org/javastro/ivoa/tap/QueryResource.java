@@ -9,6 +9,7 @@ package org.javastro.ivoa.tap;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -39,11 +40,13 @@ import java.time.Duration;
 @Tag(name = "TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
 @Path("/sync")
-public class QueryResource  extends BaseTAPResource {
+public class QueryResource  {
 
    @ConfigProperty(name="ivoa.tap.sync-timeout-seconds", defaultValue = "5")
    int syncTimeoutSeconds;
 
+   @Inject
+   TAPHelper  tapHelper;
 
    @GET
    @Produces("application/x-votable+xml")
@@ -68,11 +71,11 @@ public class QueryResource  extends BaseTAPResource {
       return Uni.createFrom().deferred(() -> {
          final TAPJob job;
          try {
-            job = (TAPJob) jobmanager.createJob(
+            job = (TAPJob) tapHelper.jobmanager.createJob(
                   new TAPJobSpecification(query, lang, responseformat, maxrec, runid, upload)
             );
 
-            jobmanager.runJob(job.getID()); // automatically run the job
+            tapHelper.jobmanager.runJob(job.getID()); // automatically run the job
          } catch (UWSException e) {
             return Uni.createFrom().failure(e);
          }
@@ -102,7 +105,7 @@ public class QueryResource  extends BaseTAPResource {
    private Uni<java.nio.file.Path> successResponse(TAPJob job) {
           return Uni.createFrom().item(() -> {
              try {
-                return getResultPath(job.getID());
+                return tapHelper.getResultPath(job.getID());
              } catch (UWSException e) {
                 throw new RuntimeException("Failed to get result path for job " + job.getID(), e);
              }
@@ -127,7 +130,7 @@ public class QueryResource  extends BaseTAPResource {
             table.addRow(new Object[]{exception.getMessage()});
          }
          if(timeout) {
-            tableWriter.setTimeoutInfo(asyncJobUri(job.getID()));
+            tableWriter.setTimeoutInfo(tapHelper.asyncJobUri(job.getID()));
          }
 
          java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("error", ".vot");
