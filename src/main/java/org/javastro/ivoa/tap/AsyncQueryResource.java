@@ -26,26 +26,22 @@ import org.jboss.resteasy.reactive.RestResponse;
  */
 @Tag(name="TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
-@Path("/async")
+@Path("async")
 public class AsyncQueryResource extends BaseUWSResource {
-   @Inject
-   JobManager  jobManager;
 
-   @Inject
-   ServiceLocator serviceLocator;
 
    @Inject
    TAPHelper tapHelper;
 
    @Override
    protected JobManager getJobManager() {
-      return jobManager;
+      return tapHelper.jobmanager;
    }
 
    @Override
    protected Response redirectToJob(String jobid)  {
 
-      final UriBuilder urib = UriBuilder.fromUri(serviceLocator.serviceURI())
+      final UriBuilder urib = UriBuilder.fromUri(tapHelper.serviceLocator.serviceURI())
             .path("async");
       if (jobid != null && !jobid.isEmpty()) {
          urib.path(jobid);
@@ -60,12 +56,12 @@ public class AsyncQueryResource extends BaseUWSResource {
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                           @RestForm("UPLOAD") String upload, @Context UriInfo uriInfo) throws UWSException {
-       BaseUWSJob job = jobManager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
+       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
        return Response.seeOther(tapHelper.asyncJobUri(job.getID())).build();
     }
 
    @GET
-   @Path("/{jobid}/results/result")
+   @Path("{jobid}/results/result")
    @Produces("application/x-votable+xml")
    public RestResponse<java.nio.file.Path> getVotable(@PathParam("jobid") String jobid) throws UWSException {
       final java.nio.file.Path path = tapHelper.getResultPath(jobid);

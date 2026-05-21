@@ -39,7 +39,7 @@ import java.time.Duration;
  */
 @Tag(name = "TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
-@Path("/sync")
+@Path("sync")
 public class QueryResource  {
 
    @ConfigProperty(name="ivoa.tap.sync-timeout-seconds", defaultValue = "5")
