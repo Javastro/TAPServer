@@ -31,7 +31,7 @@ public class QueryTest {
    @Test
    public void testAsyncQuery() {
       Response createResponse = given()
-            .formParam("QUERY", "select * from TAP_SCHEMA.schemas")
+            .formParam("QUERY", "select * from TAP_SCHEMA.tables")
             .redirects().follow(false)
             .when().post(ASYNC_ENDPOINT)
             .then()
@@ -49,6 +49,32 @@ public class QueryTest {
             .then()
             .statusCode(200)
             .body("job.phase", equalTo("PENDING"));
+
+      //Do some job management operations (e.g. query the job phase, query the job parameters, etc.)
+      given()
+            .when().get(jobUrl + "/phase")
+            .then()
+            .statusCode(200)
+            .body(comparesEqualTo("PENDING"));
+      given()
+            .when().get(jobUrl + "/parameters")
+            .then()
+            .statusCode(200)
+            .body("parameters.parameter.size()", greaterThan(0))
+            .body("parameters.parameter.find { it.@id == 'QUERY' }", equalTo("select * from TAP_SCHEMA.tables"))
+      ;
+
+      given()
+            .when().get(jobUrl + "/executionduration")
+            .then()
+            .statusCode(200)
+            .body(comparesEqualTo("0")); //IMPL have to do string comparison?
+// TODO add more tests when all of UWS is implemented.
+//      given()
+//            .when().get(jobUrl + "/destruction")
+//            .then()
+//            .statusCode(200)
+//            .log().body();
 
       //  Start the Job (POST to /phase with PHASE=RUN)
       given()
@@ -102,7 +128,10 @@ public class QueryTest {
          given()
                .when().get(jobUrl + "/results/result")
                .then()
-               .statusCode(200);
+               .statusCode(200)
+               .log().body();
+         ;
+
          //TODO get the result into a file and verify that it is an OK VOTable.
 
       }
