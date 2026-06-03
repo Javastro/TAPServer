@@ -10,11 +10,9 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -25,10 +23,17 @@ import org.javastro.ivoacore.tap.TAPWriter;
 import org.javastro.ivoacore.uws.UWSException;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
+import org.jboss.resteasy.reactive.server.multipart.FormValue;
+import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 import uk.ac.starlink.table.ColumnInfo;
 import uk.ac.starlink.table.RowListStarTable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Main TAP Query.
@@ -48,6 +53,8 @@ public class QueryResource  {
    @Inject
    TAPHelper  tapHelper;
 
+   private static final Pattern FORMAT_PATTERN = Pattern.compile("^[^,:]+,param:[^,:]+$");
+
    @GET
    @Produces("application/x-votable+xml")
    public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
@@ -57,10 +64,33 @@ public class QueryResource  {
 
    }
    @POST
+   @Consumes(MediaType.MULTIPART_FORM_DATA)
    @Produces("application/x-votable+xml")
    public Uni<java.nio.file.Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                                            @RestForm("UPLOAD") String upload,
+                                           MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
+
+      if (isValidUploadParam(upload)) {
+         String[] parts = upload.split("[,:]");
+         String tableName = parts[0];
+         String tableParam = parts[2];
+
+         Optional<FormValue> value =
+                 Optional.ofNullable(input.getValues().get(tableParam))
+                         .flatMap(list -> list.stream().findFirst());
+
+         if (value.isPresent() && value.get().isFileItem()) {
+            java.nio.file.Path uploadedFile = value.get().getFileItem().getFile();
+
+            try (InputStream in = Files.newInputStream(uploadedFile)) {
+               // Parse VOTable
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
+         }
+      }
+
       return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
 
    }
@@ -144,5 +174,7 @@ public class QueryResource  {
       }
    }
 
-
+   private static boolean isValidUploadParam(String input) {
+      return input != null && FORMAT_PATTERN.matcher(input).matches();
+   }
 }
