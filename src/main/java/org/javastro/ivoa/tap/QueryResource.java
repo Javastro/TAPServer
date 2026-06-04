@@ -25,11 +25,16 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
 import org.jboss.resteasy.reactive.server.multipart.FormValue;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
-import uk.ac.starlink.table.ColumnInfo;
-import uk.ac.starlink.table.RowListStarTable;
+import uk.ac.starlink.table.*;
+import uk.ac.starlink.votable.VOTableBuilder;
+import uk.ac.starlink.votable.VOTableWriter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Optional;
@@ -53,7 +58,8 @@ public class QueryResource  {
    @Inject
    TAPHelper  tapHelper;
 
-   private static final Pattern FORMAT_PATTERN = Pattern.compile("^[^,:]+,param:[^,:]+$");
+   private static final Pattern UPLOAD_PATTERN = Pattern.compile("^[^,:]+,[a-zA-Z][a-zA-Z0-9+.-]*:.+$");
+   
 
    @GET
    @Produces("application/x-votable+xml")
@@ -63,6 +69,11 @@ public class QueryResource  {
       return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
 
    }
+
+   //UPLOAD param details - https://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html#tth_sEc3.4.5
+   //UPLOAD=table1,http://example.com/t1.xml
+   //UPLOAD=image1,vos://example.authority!tempSpace/foo.fits
+   //UPLOAD=table3,param:t3
    @POST
    @Consumes(MediaType.MULTIPART_FORM_DATA)
    @Produces("application/x-votable+xml")
@@ -72,21 +83,52 @@ public class QueryResource  {
                                            @Context UriInfo uriInfo) {
 
       if (isValidUploadParam(upload)) {
-         String[] parts = upload.split("[,:]");
+         String[] parts = upload.split(",");
          String tableName = parts[0];
-         String tableParam = parts[2];
+         String uploadParam = parts[1];
 
-         Optional<FormValue> value =
-                 Optional.ofNullable(input.getValues().get(tableParam))
-                         .flatMap(list -> list.stream().findFirst());
+         if (uploadParam.startsWith("param:")) {
+            String paramName = uploadParam.split(":")[1];
 
-         if (value.isPresent() && value.get().isFileItem()) {
-            java.nio.file.Path uploadedFile = value.get().getFileItem().getFile();
+            Optional<FormValue> value =
+                    Optional.ofNullable(input.getValues().get(paramName))
+                            .flatMap(list -> list.stream().findFirst());
 
-            try (InputStream in = Files.newInputStream(uploadedFile)) {
-               // Parse VOTable
-            } catch (IOException e) {
-               throw new RuntimeException(e);
+            if (value.isPresent() && value.get().isFileItem()) {
+               java.nio.file.Path uploadedFile = value.get().getFileItem().getFile();
+
+               try (InputStream in = Files.newInputStream(uploadedFile)) {
+
+                  StarTable t = new StarTableFactory().makeStarTable(in, new VOTableBuilder());
+
+                  //test output
+                  StarTableWriter writer = new VOTableWriter();
+                  // Alternatives:
+                  // StarTableWriter writer = new uk.ac.starlink.table.formats.CsvTableWriter();
+                  // StarTableWriter writer = new uk.ac.starlink.table.formats.TextTableWriter();
+
+                  // 3. Pipe the stream into a ByteArrayOutputStream
+                  ByteArrayOutputStream os = new ByteArrayOutputStream();
+                  try (os) {
+                     writer.writeStarTable(t, os);
+                  }
+
+                  // 4. Convert the byte stream to a String
+                  String tableString = os.toString(StandardCharsets.UTF_8);
+
+                  // Now you can print it or use it as needed
+                  System.out.println(tableString);
+               } catch (IOException e) {
+                  throw new RuntimeException(e);
+               }
+            } else {
+               //URI located VOTable
+               switch (URI.create(uploadParam).getScheme()) {
+                  case "http":
+                  case "https":
+                  case "file":
+                  case "vos"://might need handling differently to explicit https
+               }
             }
          }
       }
@@ -175,6 +217,6 @@ public class QueryResource  {
    }
 
    private static boolean isValidUploadParam(String input) {
-      return input != null && FORMAT_PATTERN.matcher(input).matches();
+      return input != null && UPLOAD_PATTERN.matcher(input).matches();
    }
 }
