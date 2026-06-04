@@ -88,47 +88,14 @@ public class QueryResource  {
          String uploadParam = parts[1];
 
          if (uploadParam.startsWith("param:")) {
-            String paramName = uploadParam.split(":")[1];
-
-            Optional<FormValue> value =
-                    Optional.ofNullable(input.getValues().get(paramName))
-                            .flatMap(list -> list.stream().findFirst());
-
-            if (value.isPresent() && value.get().isFileItem()) {
-               java.nio.file.Path uploadedFile = value.get().getFileItem().getFile();
-
-               try (InputStream in = Files.newInputStream(uploadedFile)) {
-
-                  StarTable t = new StarTableFactory().makeStarTable(in, new VOTableBuilder());
-
-                  //test output
-                  StarTableWriter writer = new VOTableWriter();
-                  // Alternatives:
-                  // StarTableWriter writer = new uk.ac.starlink.table.formats.CsvTableWriter();
-                  // StarTableWriter writer = new uk.ac.starlink.table.formats.TextTableWriter();
-
-                  // 3. Pipe the stream into a ByteArrayOutputStream
-                  ByteArrayOutputStream os = new ByteArrayOutputStream();
-                  try (os) {
-                     writer.writeStarTable(t, os);
-                  }
-
-                  // 4. Convert the byte stream to a String
-                  String tableString = os.toString(StandardCharsets.UTF_8);
-
-                  // Now you can print it or use it as needed
-                  System.out.println(tableString);
-               } catch (IOException e) {
-                  throw new RuntimeException(e);
-               }
-            } else {
-               //URI located VOTable
-               switch (URI.create(uploadParam).getScheme()) {
-                  case "http":
-                  case "https":
-                  case "file":
-                  case "vos"://might need handling differently to explicit https
-               }
+            storeVOTable(uploadParam, input);
+         } else {
+            //URI located VOTable - probably only need to handle the param: version as https: etc will be handled in the actual job
+            switch (URI.create(uploadParam).getScheme()) {
+               case "http":
+               case "https":
+               case "file":
+               case "vos"://might need handling differently to explicit https
             }
          }
       }
@@ -218,5 +185,42 @@ public class QueryResource  {
 
    private static boolean isValidUploadParam(String input) {
       return input != null && UPLOAD_PATTERN.matcher(input).matches();
+   }
+
+   private void storeVOTable(String uploadParam, MultipartFormDataInput input){
+      String paramName = uploadParam.split(":")[1];
+
+      Optional<FormValue> value =
+              Optional.ofNullable(input.getValues().get(paramName))
+                      .flatMap(list -> list.stream().findFirst());
+
+      if (value.isPresent() && value.get().isFileItem()) {
+         java.nio.file.Path uploadedFile = value.get().getFileItem().getFile();
+
+         try (InputStream in = Files.newInputStream(uploadedFile)) {
+
+            StarTable t = new StarTableFactory().makeStarTable(in, new VOTableBuilder());
+
+            //test output
+            StarTableWriter writer = new VOTableWriter();
+            // Alternatives:
+            // StarTableWriter writer = new uk.ac.starlink.table.formats.CsvTableWriter();
+            // StarTableWriter writer = new uk.ac.starlink.table.formats.TextTableWriter();
+
+            // 3. Pipe the stream into a ByteArrayOutputStream
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            try (os) {
+               writer.writeStarTable(t, os);
+            }
+
+            // 4. Convert the byte stream to a String
+            String tableString = os.toString(StandardCharsets.UTF_8);
+
+            // Now you can print it or use it as needed
+            System.out.println(tableString);
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         }
+      }
    }
 }
