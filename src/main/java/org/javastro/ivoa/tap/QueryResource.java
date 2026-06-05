@@ -25,19 +25,17 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
 import org.jboss.resteasy.reactive.server.multipart.FormValue;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
+import org.jspecify.annotations.NonNull;
 import uk.ac.starlink.table.*;
-import uk.ac.starlink.votable.VOTableBuilder;
-import uk.ac.starlink.votable.VOTableWriter;
 
-import java.io.ByteArrayOutputStream;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -82,26 +80,24 @@ public class QueryResource  {
                                            MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
 
+      // If there's a "~,param:~~" upload parameter supplied then upload the file to tmp and create a file: URI to it.
       if (isValidUploadParam(upload)) {
          String[] parts = upload.split(",");
-         String tableName = parts[0];
          String uploadParam = parts[1];
 
          if (uploadParam.startsWith("param:")) {
-            storeVOTable(uploadParam, input);
-         } else {
-            //URI located VOTable - probably only need to handle the param: version as https: etc will be handled in the actual job
-            switch (URI.create(uploadParam).getScheme()) {
-               case "http":
-               case "https":
-               case "file":
-               case "vos"://might need handling differently to explicit https
-            }
+             try {
+                 URI fileUri = storeVOTable(uploadParam, input);
+                 if (fileUri != null){
+                    upload = fileUri.toString();
+                 }
+             } catch (IOException e) {
+                 throw new RuntimeException(e);
+             }
          }
       }
 
       return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
-
    }
 
 
@@ -187,40 +183,22 @@ public class QueryResource  {
       return input != null && UPLOAD_PATTERN.matcher(input).matches();
    }
 
-   private void storeVOTable(String uploadParam, MultipartFormDataInput input){
+   private URI storeVOTable(@NonNull String uploadParam, @NonNull MultipartFormDataInput input) throws IOException {
       String paramName = uploadParam.split(":")[1];
 
-      Optional<FormValue> value =
-              Optional.ofNullable(input.getValues().get(paramName))
-                      .flatMap(list -> list.stream().findFirst());
+      Optional<FormValue> value = Optional.ofNullable(input.getValues().get(paramName))
+              .flatMap(list -> list.stream().findFirst());
 
       if (value.isPresent() && value.get().isFileItem()) {
          java.nio.file.Path uploadedFile = value.get().getFileItem().getFile();
 
-         try (InputStream in = Files.newInputStream(uploadedFile)) {
+         UUID uuid = UUID.randomUUID();
+         java.nio.file.Path persistent = Files.createTempFile("tap-upload-" + uuid, ".vot");
 
-            StarTable t = new StarTableFactory().makeStarTable(in, new VOTableBuilder());
+         Files.copy(uploadedFile, persistent, StandardCopyOption.REPLACE_EXISTING);
 
-            //test output
-            StarTableWriter writer = new VOTableWriter();
-            // Alternatives:
-            // StarTableWriter writer = new uk.ac.starlink.table.formats.CsvTableWriter();
-            // StarTableWriter writer = new uk.ac.starlink.table.formats.TextTableWriter();
-
-            // 3. Pipe the stream into a ByteArrayOutputStream
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (os) {
-               writer.writeStarTable(t, os);
-            }
-
-            // 4. Convert the byte stream to a String
-            String tableString = os.toString(StandardCharsets.UTF_8);
-
-            // Now you can print it or use it as needed
-            System.out.println(tableString);
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
+         return persistent.toUri();
       }
+      return null;
    }
 }
