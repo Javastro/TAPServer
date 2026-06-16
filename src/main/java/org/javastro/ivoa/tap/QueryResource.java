@@ -34,6 +34,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -64,7 +65,8 @@ public class QueryResource  {
    public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                                                      @RestQuery String upload,
                                                      @Context UriInfo uriInfo) {
-      return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
+      Map<String, URI> uploadMap = null; //TODO - handle remote URIs only as there's no form-data with GET
+      return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo);
 
    }
 
@@ -81,8 +83,10 @@ public class QueryResource  {
                                            @Context UriInfo uriInfo) {
 
       // If there's a "~,param:~~" upload parameter supplied then upload the file to tmp and create a file: URI to it.
+      String tableName = null;
       if (isValidUploadParam(upload)) {
          String[] parts = upload.split(",");
+         tableName = parts[0];
          String uploadParam = parts[1];
 
          if (uploadParam.startsWith("param:")) {
@@ -96,18 +100,21 @@ public class QueryResource  {
              }
          }
       }
+      Map<String, URI> uploadMap = new java.util.HashMap<>();
+      uploadMap.put(tableName, URI.create(upload));
 
-      return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
+      //TODO - REMOVE the temp file: once job has completed
+      return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo);
    }
 
 
-   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, UriInfo uriInfo) {
+   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, Map<String, URI> uploads, UriInfo uriInfo) {
       final Duration SYNC_WAIT = Duration.ofSeconds(syncTimeoutSeconds);
       return Uni.createFrom().deferred(() -> {
          final TAPJob job;
          try {
             job = (TAPJob) tapHelper.jobmanager.createJob(
-                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, upload)
+                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, uploads)
             );
 
             tapHelper.jobmanager.runJob(job.getID()); // automatically run the job

@@ -20,6 +20,9 @@ import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestResponse;
 
+import java.net.URI;
+import java.util.Map;
+
 /**
  * Main Async TAP Query.
  * Created on 04/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
@@ -56,7 +59,8 @@ public class AsyncQueryResource extends BaseUWSResource {
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                           @RestForm("UPLOAD") String upload, @Context UriInfo uriInfo) throws UWSException {
-       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
+      Map<String, URI> uploadMap = null; //TODO handle post upload as with sync
+       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,uploadMap));
        return Response.seeOther(tapHelper.asyncJobUri(job.getID())).build();
     }
 
