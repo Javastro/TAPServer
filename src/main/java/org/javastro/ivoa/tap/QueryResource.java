@@ -26,6 +26,8 @@ import org.jboss.resteasy.reactive.RestQuery;
 import org.jboss.resteasy.reactive.server.multipart.FormValue;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.starlink.table.*;
 
 
@@ -58,7 +60,7 @@ public class QueryResource  {
    TAPHelper  tapHelper;
 
    private static final Pattern UPLOAD_PATTERN = Pattern.compile("^[^,:]+,[a-zA-Z][a-zA-Z0-9+.-]*:.+$");
-   
+   private static final Logger log = LoggerFactory.getLogger(QueryResource.class);
 
    @GET
    @Produces("application/x-votable+xml")
@@ -82,7 +84,7 @@ public class QueryResource  {
                                            MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
 
-      // If there's a "~,param:~~" upload parameter supplied then upload the file to tmp and create a file: URI to it.
+      // If there's a "~,param:~~" upload parameter supplied, then upload the file to tmp and create a file: URI to it.
       String tableName = null;
       if (isValidUploadParam(upload)) {
          String[] parts = upload.split(",");
@@ -103,8 +105,19 @@ public class QueryResource  {
       Map<String, URI> uploadMap = new java.util.HashMap<>();
       uploadMap.put(tableName, URI.create(upload));
 
-      //TODO - REMOVE the temp file: once job has completed
-      return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo);
+      return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo)
+              .onTermination()
+              .invoke(() -> {
+                 for (URI uploadedFile : uploadMap.values()) {
+                    if ("file".equalsIgnoreCase(uploadedFile.getScheme())) {
+                       try {
+                          Files.deleteIfExists(java.nio.file.Path.of(uploadedFile));
+                       } catch (IOException e) {
+                          log.warn("Failed to delete upload file {}", uploadedFile, e);
+                       }
+                    }
+                 }
+              });
    }
 
 
