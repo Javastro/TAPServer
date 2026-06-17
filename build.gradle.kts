@@ -9,15 +9,16 @@ val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
 dependencies {
-    implementation(platform("org.javastro:bom:2026.1"))
-    implementation("org.javastro.ivoa.core:tap")
-    implementation("org.javastro.ivoa.core:dal")
-    implementation("org.javastro.ivoa.core:pgsphere")
+    implementation(platform("org.javastro:bom:2026.2"))
+    implementation("org.javastro.ivoa.core:tap:0.1.0-SNAPSHOT")
+    implementation("org.javastro.ivoa.core:dal:0.1.0-SNAPSHOT")
+    implementation("org.javastro.ivoa.core:pgsphere:0.9.1-SNAPSHOT")
     //cannot include the demo when including the above because of classloader problems
-//    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT")
-//    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT:test")
+    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT")
+    implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT:test")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-rest-jaxb")
+    implementation("net.sf.saxon:Saxon-HE:12.5")
     implementation("io.quarkus:quarkus-kubernetes")
     implementation("io.quarkus:quarkus-kubernetes-config") // possibly not necessary https://quarkus.io/guides/kubernetes-config has alternative
     implementation("io.quarkiverse.helm:quarkus-helm:1.2.6")
