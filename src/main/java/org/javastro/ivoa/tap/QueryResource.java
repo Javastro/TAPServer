@@ -84,26 +84,33 @@ public class QueryResource  {
                                            MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
 
-      // If there's a "~,param:~~" upload parameter supplied, then upload the file to tmp and create a file: URI to it.
-      String tableName = null;
-      if (isValidUploadParam(upload)) {
-         String[] parts = upload.split(",");
-         tableName = parts[0];
-         String uploadParam = parts[1];
+      Map<String, URI> uploadMap = new java.util.HashMap<>();
 
-         if (uploadParam.startsWith("param:")) {
-             try {
-                 URI fileUri = storeVOTable(uploadParam, input);
-                 if (fileUri != null){
-                    upload = fileUri.toString();
-                 }
-             } catch (IOException e) {
-                 throw new RuntimeException(e);
-             }
+      if (upload != null) {
+         String[] uploadSpecs = upload.split(";");
+         for (String uploadSpec : uploadSpecs) {
+            // If there's a "~,param:~~" upload parameter supplied, then upload the file to tmp and create a file: URI to it.
+            String[] parts = uploadSpec.split(",");
+            String tableName = parts[0];
+            String tableLoc = parts[1];            //either param:<upload file> or a URL to a remote file (http, https, vos, etc)
+            if (isValidUploadParam(uploadSpec)) {
+               if (tableLoc.startsWith("param:")) {
+                  try {
+                     URI fileUri = storeVOTable(tableLoc, input);
+                     if (fileUri != null) {
+                        uploadSpec = fileUri.toString();
+                     }
+                  } catch (IOException e) {
+                     throw new RuntimeException(e);
+                  }
+               }
+               else {
+                  uploadSpec = tableLoc;
+               }
+            }
+            uploadMap.put(tableName, URI.create(uploadSpec));
          }
       }
-      Map<String, URI> uploadMap = new java.util.HashMap<>();
-      uploadMap.put(tableName, URI.create(upload));
 
       return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo)
               .onTermination()
