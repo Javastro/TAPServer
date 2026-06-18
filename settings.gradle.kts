@@ -30,4 +30,3 @@ dependencyResolutionManagement {
 
 rootProject.name="tap-server"
 
-includeBuild("../ivoacore") //TODO separate this build when publishing
