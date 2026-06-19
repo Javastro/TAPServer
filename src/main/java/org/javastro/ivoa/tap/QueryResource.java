@@ -67,7 +67,16 @@ public class QueryResource  {
    public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                                                      @RestQuery String upload,
                                                      @Context UriInfo uriInfo) {
-      Map<String, URI> uploadMap = null; //TODO - handle remote URIs only as there's no form-data with GET
+      Map<String, URI> uploadMap = new java.util.HashMap<>();
+      if (upload != null) {
+         String[] uploadSpecs = upload.split(";");
+         for (String uploadSpec : uploadSpecs) {
+            String[] parts = uploadSpec.split(",");
+            String tableName = parts[0];
+            String tableLoc = parts[1];
+            uploadMap.put(tableName, URI.create(tableLoc));
+         }
+      }
       return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo);
 
    }
