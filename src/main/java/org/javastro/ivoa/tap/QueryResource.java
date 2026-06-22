@@ -20,6 +20,7 @@ import org.javastro.ivoa.entities.uws.ExecutionPhase;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.TAPWriter;
+import org.javastro.ivoacore.tap.upload.TapUploadService;
 import org.javastro.ivoacore.uws.UWSException;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
@@ -39,7 +40,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 /**
  * Main TAP Query.
@@ -59,7 +59,6 @@ public class QueryResource  {
    @Inject
    TAPHelper  tapHelper;
 
-   private static final Pattern UPLOAD_PATTERN = Pattern.compile("^[^,:]+,[a-zA-Z][a-zA-Z0-9+.-]*:.+$");
    private static final Logger log = LoggerFactory.getLogger(QueryResource.class);
 
    @GET
@@ -67,18 +66,8 @@ public class QueryResource  {
    public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                                                      @RestQuery String upload,
                                                      @Context UriInfo uriInfo) {
-      Map<String, URI> uploadMap = new java.util.HashMap<>();
-      if (upload != null) {
-         String[] uploadSpecs = upload.split(";");
-         for (String uploadSpec : uploadSpecs) {
-            String[] parts = uploadSpec.split(",");
-            String tableName = parts[0];
-            String tableLoc = parts[1];
-            uploadMap.put(tableName, URI.create(tableLoc));
-         }
-      }
+      Map<String, URI> uploadMap = parseUploadParams(upload, null);
       return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo);
-
    }
 
    //UPLOAD param details - https://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html#tth_sEc3.4.5
@@ -93,33 +82,7 @@ public class QueryResource  {
                                            MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
 
-      Map<String, URI> uploadMap = new java.util.HashMap<>();
-
-      if (upload != null) {
-         String[] uploadSpecs = upload.split(";");
-         for (String uploadSpec : uploadSpecs) {
-            // If there's a "~,param:~~" upload parameter supplied, then upload the file to tmp and create a file: URI to it.
-            String[] parts = uploadSpec.split(",");
-            String tableName = parts[0];
-            String tableLoc = parts[1];            //either param:<upload file> or a URL to a remote file (http, https, vos, etc)
-            if (isValidUploadParam(uploadSpec)) {
-               if (tableLoc.startsWith("param:")) {
-                  try {
-                     URI fileUri = storeVOTable(tableLoc, input);
-                     if (fileUri != null) {
-                        uploadSpec = fileUri.toString();
-                     }
-                  } catch (IOException e) {
-                     throw new RuntimeException(e);
-                  }
-               }
-               else {
-                  uploadSpec = tableLoc;
-               }
-            }
-            uploadMap.put(tableName, URI.create(uploadSpec));
-         }
-      }
+      Map<String, URI> uploadMap = parseUploadParams(upload, input);
 
       return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo)
               .onTermination()
@@ -215,10 +178,54 @@ public class QueryResource  {
       }
    }
 
-   private static boolean isValidUploadParam(String input) {
-      return input != null && UPLOAD_PATTERN.matcher(input).matches();
+   /**
+    * Parses the UPLOAD parameter from a DALI-compliant query and processes any file uploads or URLs present in it.
+    *
+    * @param uploadParam The UPLOAD parameter containing mappings of table names to data locations.
+    *                    Each mapping is provided in the format: tableName,dataLocation, where dataLocation could be a URL or a
+    *                    parameter indicating an uploaded file (e.g., param:uploadFile).
+    * @param input The multipart form data input containing uploaded file data, if any.
+    * @return A map where the keys are table names and the values are URIs pointing to corresponding data sources (e.g., temporary file URIs, remote URLs).
+    */
+   private Map<String, URI> parseUploadParams(String uploadParam, MultipartFormDataInput input) {
+      Map<String, URI> uploadMap = new java.util.HashMap<>();
+
+      if (uploadParam != null) {
+         String[] uploadSpecs = uploadParam.split(";");
+         for (String uploadSpec : uploadSpecs) {
+            // If there's a "~,param:~~" upload parameter supplied, then upload the file to tmp and create a file: URI to it.
+            String[] parts = uploadSpec.split(",");
+            String tableName = parts[0];
+            String tableLoc = parts[1];            //either param:<upload file> or a URL to a remote file (http, https, vos, etc)
+            if (TapUploadService.isValidUploadParam(uploadSpec)) {
+               if (tableLoc.startsWith("param:")) {
+                  try {
+                     URI fileUri = storeVOTable(tableLoc, input);
+                     if (fileUri != null) {
+                        uploadSpec = fileUri.toString();
+                     }
+                  } catch (IOException e) {
+                     throw new RuntimeException(e);
+                  }
+               }
+               else {
+                  uploadSpec = tableLoc;
+               }
+            }
+            uploadMap.put(tableName, URI.create(uploadSpec));
+         }
+      }
+      return uploadMap;
    }
 
+   /**
+    * Stores a VOTable in a temporary file and returns the URI of the file.
+    * @param uploadParam parameter of the DALI UPLOAD query parameter, e.g. "table1,http://example.com/t1.xml",
+    *                    "image1,vos://example.authority!tempSpace/foo.fits", or "table3,param:t3"
+    * @param input The multipart form data input.
+    * @return The URI of the uploaded file, or null if the file was not uploaded.
+    * @throws IOException If an I/O error occurs while storing the file.
+    */
    private URI storeVOTable(@NonNull String uploadParam, @NonNull MultipartFormDataInput input) throws IOException {
       String paramName = uploadParam.split(":")[1];
 
