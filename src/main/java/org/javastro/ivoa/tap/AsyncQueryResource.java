@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.javastro.ivoa.tap.upload.Utilities;
 import org.javastro.ivoacore.common.ServiceLocator;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.uws.BaseUWSJob;
@@ -19,6 +20,7 @@ import org.javastro.ivoacore.uws.UWSException;
 import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestResponse;
+import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 
 import java.net.URI;
 import java.util.Map;
@@ -32,8 +34,7 @@ import java.util.Map;
 @Path("async")
 public class AsyncQueryResource extends BaseUWSResource {
 
-
-   @Inject
+    @Inject
    TAPHelper tapHelper;
 
    @Override
@@ -53,13 +54,13 @@ public class AsyncQueryResource extends BaseUWSResource {
             .build()).build();
    }
 
-
-   //IMPL the two query endpoints are in different resources for routing purposes.
+   //IMPL the two query endpoints are in different resources for routing purposes
     @POST
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
-                          @RestForm("UPLOAD") String upload, @Context UriInfo uriInfo) throws UWSException {
-      Map<String, URI> uploadMap = null; //TODO handle post upload as with sync
+                          @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
+
+       Map<String, URI> uploadMap = Utilities.parseUploadParams(upload, input);
        BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,uploadMap));
        return Response.seeOther(tapHelper.asyncJobUri(job.getID())).build();
     }
@@ -73,6 +74,4 @@ public class AsyncQueryResource extends BaseUWSResource {
             .header(HttpHeaders.CONTENT_DISPOSITION, "result.vot")
             .build();
    }
-
-
 }
