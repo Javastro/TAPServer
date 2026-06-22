@@ -1,6 +1,7 @@
 package org.javastro.ivoa.tap.upload;
 
 import org.javastro.ivoacore.tap.upload.TapUploadService;
+import org.jboss.resteasy.reactive.common.NotImplementedYet;
 import org.jboss.resteasy.reactive.server.multipart.FormValue;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 import org.jspecify.annotations.NonNull;
@@ -53,7 +54,8 @@ public class Utilities {
                         }
                     }
                     else if (tableLoc.startsWith("vos")) {
-                        //TODO: implement VOSpace upload handling, which will likely involve downloading the file to a temporary location and then creating a file: URI to it, similar to the param: case above.
+                        //Requires a VOSpace client to be configured for testing
+                        throw new UnsupportedOperationException("VOSpace uploads are not currently supported");
                     }
                     else {
                         uploadSpec = tableLoc;
