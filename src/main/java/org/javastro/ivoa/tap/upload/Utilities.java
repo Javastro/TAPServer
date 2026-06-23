@@ -1,7 +1,6 @@
 package org.javastro.ivoa.tap.upload;
 
 import org.javastro.ivoacore.tap.upload.TapUploadService;
-import org.jboss.resteasy.reactive.common.NotImplementedYet;
 import org.jboss.resteasy.reactive.server.multipart.FormValue;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 import org.jspecify.annotations.NonNull;

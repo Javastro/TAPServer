@@ -70,7 +70,7 @@ public class QueryResource  {
    //UPLOAD=image1,vos://example.authority!tempSpace/foo.fits
    //UPLOAD=table3,param:t3
    @POST
-   @Consumes(MediaType.MULTIPART_FORM_DATA)
+   @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
    @Produces("application/x-votable+xml")
    public Uni<java.nio.file.Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                                            @RestForm("UPLOAD") String upload,

@@ -7,7 +7,6 @@ package org.javastro.ivoa.tap;
 
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.RestAssured;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -185,6 +184,7 @@ public class QueryTest {
             .log().body()
             .statusCode(200); //TODO validate the VOTable
    }
+
    @Test
    public void testErrorQuery() {
       given()
@@ -194,6 +194,4 @@ public class QueryTest {
             .log().body()
             .statusCode(200); //TODO validate the VOTable
    }
-
-
 }
