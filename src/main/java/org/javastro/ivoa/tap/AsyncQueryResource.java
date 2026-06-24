@@ -11,9 +11,10 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.javastro.ivoa.tap.upload.Utilities;
-import org.javastro.ivoacore.common.ServiceLocator;
+import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
+import org.javastro.ivoacore.tap.upload.NullUploader;
+import org.javastro.ivoacore.tap.upload.TAPUploadCacher;
 import org.javastro.ivoacore.uws.BaseUWSJob;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.UWSException;
@@ -60,9 +61,11 @@ public class AsyncQueryResource extends BaseUWSResource {
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                           @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
-
-       Map<String, URI> uploadMap = Utilities.parseUploadParams(upload, input);
-       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,uploadMap));
+       TAPUploadCacher tapUploader = new NullUploader();
+       if(upload != null && !upload.isEmpty() ) {
+         tapUploader = new QuarkusTapUploader(upload, input);
+       }
+       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,tapUploader));
        return Response.seeOther(tapHelper.asyncJobUri(job.getID())).build();
     }
 

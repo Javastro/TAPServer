@@ -17,10 +17,12 @@ import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.javastro.ivoa.entities.uws.ExecutionPhase;
-import org.javastro.ivoa.tap.upload.Utilities;
+import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.TAPWriter;
+import org.javastro.ivoacore.tap.upload.NullUploader;
+import org.javastro.ivoacore.tap.upload.TAPUploadCacher;
 import org.javastro.ivoacore.uws.UWSException;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
@@ -61,8 +63,8 @@ public class QueryResource  {
    public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                                                      @RestQuery String upload,
                                                      @Context UriInfo uriInfo) {
-      Map<String, URI> uploadMap = Utilities.parseUploadParams(upload, null);
-      return runAndCleanupJob(query, lang, responseformat, maxrec, runid, uriInfo, uploadMap);
+
+      return handleJob(query, lang, responseformat, maxrec, runid, upload, null, uriInfo);
    }
 
    //UPLOAD param details - https://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html#tth_sEc3.4.5
@@ -77,47 +79,21 @@ public class QueryResource  {
                                            MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
 
-      Map<String, URI> uploadMap = Utilities.parseUploadParams(upload, input);
-
-      return runAndCleanupJob(query, lang, responseformat, maxrec, runid, uriInfo, uploadMap);
+      return handleJob(query, lang, responseformat, maxrec, runid, upload, input, uriInfo);
    }
 
-   /**
-    * Executes a job based on the provided parameters and ensures that temporary upload files are cleaned up after completion.
-    * The method invokes a TAP job, listens for its termination, and performs cleanup of uploaded files stored locally.
-    *
-    * @param query The query string detailing the request to be processed.
-    * @param lang The language in which the query is written.
-    * @param responseformat Specifies the format in which the response should be returned.
-    * @param maxrec The maximum number of records to be returned by the query.
-    * @param runid A unique identifier for the job run.
-    * @param uriInfo The URI context of the request.
-    * @param uploadMap A map of upload identifiers to their respective URIs for uploaded resources.
-    * @return A Uni containing the path to the resulting file of the job execution.
-    */
-   private Uni<java.nio.file.Path> runAndCleanupJob(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid, @Context UriInfo uriInfo, Map<String, URI> uploadMap) {
-      return handleJob(query, lang, responseformat, maxrec, runid, uploadMap, uriInfo)
-              .onTermination()
-              .invoke(() -> {
-                 for (URI uploadedFile : uploadMap.values()) {
-                    if ("file".equalsIgnoreCase(uploadedFile.getScheme())) {
-                       try {
-                          Files.deleteIfExists(java.nio.file.Path.of(uploadedFile));
-                       } catch (IOException e) {
-                          log.warn("Failed to delete upload file {}", uploadedFile, e);
-                       }
-                    }
-                 }
-              });
-   }
 
-   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, Map<String, URI> uploads, UriInfo uriInfo) {
+   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, MultipartFormDataInput input, UriInfo uriInfo) {
       final Duration SYNC_WAIT = Duration.ofSeconds(syncTimeoutSeconds);
       return Uni.createFrom().deferred(() -> {
          final TAPJob job;
          try {
+            TAPUploadCacher tapUploader = new NullUploader();
+            if(upload != null && !upload.isEmpty() ) {
+               tapUploader = new QuarkusTapUploader(upload, input);
+            }
             job = (TAPJob) tapHelper.jobmanager.createJob(
-                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, uploads)
+                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
             );
 
             tapHelper.jobmanager.runJob(job.getID()); // automatically run the job
