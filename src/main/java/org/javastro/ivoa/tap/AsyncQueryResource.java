@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
+import org.javastro.ivoa.quarkus.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.upload.NullUploader;
 import org.javastro.ivoacore.tap.upload.TAPUploadCacher;
@@ -22,9 +22,6 @@ import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
-
-import java.net.URI;
-import java.util.Map;
 
 /**
  * Main Async TAP Query.

@@ -17,7 +17,7 @@ import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.javastro.ivoa.entities.uws.ExecutionPhase;
-import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
+import org.javastro.ivoa.quarkus.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.TAPWriter;
@@ -32,11 +32,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.starlink.table.*;
 
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
 import java.time.Duration;
-import java.util.Map;
 
 /**
  * Main TAP Query.

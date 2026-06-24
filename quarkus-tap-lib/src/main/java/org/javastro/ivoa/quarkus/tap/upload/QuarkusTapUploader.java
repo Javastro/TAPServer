@@ -1,4 +1,9 @@
-    package org.javastro.ivoa.tap.upload;
+    /*
+ * Copyright (c) 2026. Paul Harrison, University of Manchester.
+ *
+ */
+
+package org.javastro.ivoa.quarkus.tap.upload;
 
     import org.javastro.ivoacore.tap.upload.BaseTAPUploadCacher;
     import org.jboss.resteasy.reactive.server.multipart.FormValue;
