@@ -6,6 +6,8 @@ This project uses Quarkus, If you want to learn more about Quarkus, please visit
 
 [![Java CI with Gradle](https://github.com/Javastro/TAPServer/actions/workflows/gradle.yml/badge.svg)](https://github.com/Javastro/TAPServer/actions/workflows/gradle.yml)
 
+Most of the functionality in this server comes from dependencies on the [ivoacore libraries](https://github.com/Javastro/ivoacore) - this project 
+ contains the minimal code to make the TAP server work within the quarkus framework. In addition the [quarkus-tap-lib](./quarkus-tap-lib) subdirectory contains a library with some quarkus specific functionality that can be re-used in another Quarkus-based TAP implementation.
 
 ## Running the application in dev mode
 
