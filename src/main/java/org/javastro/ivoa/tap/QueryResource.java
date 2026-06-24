@@ -10,25 +10,33 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.javastro.ivoa.entities.uws.ExecutionPhase;
+import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.TAPWriter;
+import org.javastro.ivoacore.tap.upload.NullUploader;
+import org.javastro.ivoacore.tap.upload.TAPUploadCacher;
 import org.javastro.ivoacore.uws.UWSException;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
-import uk.ac.starlink.table.ColumnInfo;
-import uk.ac.starlink.table.RowListStarTable;
+import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.ac.starlink.table.*;
 
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * Main TAP Query.
@@ -48,31 +56,44 @@ public class QueryResource  {
    @Inject
    TAPHelper  tapHelper;
 
+   private static final Logger log = LoggerFactory.getLogger(QueryResource.class);
+
    @GET
    @Produces("application/x-votable+xml")
    public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                                                      @RestQuery String upload,
                                                      @Context UriInfo uriInfo) {
-      return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
 
+      return handleJob(query, lang, responseformat, maxrec, runid, upload, null, uriInfo);
    }
+
+   //UPLOAD param details - https://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html#tth_sEc3.4.5
+   //UPLOAD=table1,http://example.com/t1.xml
+   //UPLOAD=image1,vos://example.authority!tempSpace/foo.fits
+   //UPLOAD=table3,param:t3
    @POST
+   @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
    @Produces("application/x-votable+xml")
    public Uni<java.nio.file.Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                                            @RestForm("UPLOAD") String upload,
+                                           MultipartFormDataInput input,
                                            @Context UriInfo uriInfo) {
-      return handleJob(query, lang, responseformat, maxrec, runid, upload, uriInfo);
 
+      return handleJob(query, lang, responseformat, maxrec, runid, upload, input, uriInfo);
    }
 
 
-   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, UriInfo uriInfo) {
+   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, MultipartFormDataInput input, UriInfo uriInfo) {
       final Duration SYNC_WAIT = Duration.ofSeconds(syncTimeoutSeconds);
       return Uni.createFrom().deferred(() -> {
          final TAPJob job;
          try {
+            TAPUploadCacher tapUploader = new NullUploader();
+            if(upload != null && !upload.isEmpty() ) {
+               tapUploader = new QuarkusTapUploader(upload, input);
+            }
             job = (TAPJob) tapHelper.jobmanager.createJob(
-                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, upload)
+                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
             );
 
             tapHelper.jobmanager.runJob(job.getID()); // automatically run the job
@@ -143,6 +164,4 @@ public class QueryResource  {
          throw new RuntimeException("Failed to create error VOTable: " + e.getMessage(), e);
       }
    }
-
-
 }

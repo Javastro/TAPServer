@@ -7,13 +7,9 @@ package org.javastro.ivoa.tap;
 
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.RestAssured;
-import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -25,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Created on 05/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
  */
 @QuarkusTest
-public class QueryTest {
+public class QueryTest extends AbstractTAPTest {
    private static final String ASYNC_ENDPOINT = "/async";
    private static final String SYNC_ENDPOINT = "/sync";
    @Test
@@ -76,69 +72,7 @@ public class QueryTest {
 //            .statusCode(200)
 //            .log().body();
 
-      //  Start the Job (POST to /phase with PHASE=RUN)
-      given()
-            .contentType(ContentType.URLENC)
-            .redirects().follow(false)
-            .formParam("PHASE", "RUN")
-            .when()
-            .post(jobUrl + "/phase")
-            .then()
-            .statusCode(303);
-
-      // Poll until
-      await().atMost(Duration.ofSeconds(30))
-            .pollInterval(Duration.ofMillis(500))
-            .untilAsserted(() -> {
-               given()
-                     .when().get(jobUrl + "/phase")
-                     .then()
-                     .statusCode(200)
-                     .body(not(comparesEqualTo("RUNNING")));
-            })
-            ;
-      String status = given()
-            .when().get(jobUrl + "/phase")
-            .then()
-            .statusCode(200)
-            .extract().body().asString();
-      if (status.equals("ERROR"))
-      {
-
-       given()
-             .when().get(jobUrl + "/error")
-             .then()
-             .statusCode(200)
-             .log().body();
-       fail("Job ended in error state");
-
-      }
-      else if (status.equals("COMPLETED")) {
-
-
-         // Retrieve Results
-         given()
-               .when().get(jobUrl + "/results")
-               .then()
-               .log().ifValidationFails(LogDetail.BODY)
-               .statusCode(200)
-               .body("results.result.size()", greaterThan(0));
-
-         //retrieve the actual result
-         given()
-               .when().get(jobUrl + "/results/result")
-               .then()
-               .statusCode(200)
-               .log().body();
-         ;
-
-         //TODO get the result into a file and verify that it is an OK VOTable.
-
-      }
-       else
-      {
-         fail("Unexpected job status "+status);
-      }
+      startAndTestJob(jobUrl);
    }
 
 
@@ -185,6 +119,7 @@ public class QueryTest {
             .log().body()
             .statusCode(200); //TODO validate the VOTable
    }
+
    @Test
    public void testErrorQuery() {
       given()
@@ -194,6 +129,4 @@ public class QueryTest {
             .log().body()
             .statusCode(200); //TODO validate the VOTable
    }
-
-
 }

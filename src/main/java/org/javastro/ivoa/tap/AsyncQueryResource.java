@@ -11,14 +11,20 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.javastro.ivoacore.common.ServiceLocator;
+import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
+import org.javastro.ivoacore.tap.upload.NullUploader;
+import org.javastro.ivoacore.tap.upload.TAPUploadCacher;
 import org.javastro.ivoacore.uws.BaseUWSJob;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.UWSException;
 import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestResponse;
+import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
+
+import java.net.URI;
+import java.util.Map;
 
 /**
  * Main Async TAP Query.
@@ -29,8 +35,7 @@ import org.jboss.resteasy.reactive.RestResponse;
 @Path("async")
 public class AsyncQueryResource extends BaseUWSResource {
 
-
-   @Inject
+    @Inject
    TAPHelper tapHelper;
 
    @Override
@@ -50,13 +55,17 @@ public class AsyncQueryResource extends BaseUWSResource {
             .build()).build();
    }
 
-
-   //IMPL the two query endpoints are in different resources for routing purposes.
+   //IMPL the two query endpoints are in different resources for routing purposes
     @POST
+    @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
-                          @RestForm("UPLOAD") String upload, @Context UriInfo uriInfo) throws UWSException {
-       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,upload));
+                          @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
+       TAPUploadCacher tapUploader = new NullUploader();
+       if(upload != null && !upload.isEmpty() ) {
+         tapUploader = new QuarkusTapUploader(upload, input);
+       }
+       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,tapUploader));
        return Response.seeOther(tapHelper.asyncJobUri(job.getID())).build();
     }
 
@@ -69,6 +78,4 @@ public class AsyncQueryResource extends BaseUWSResource {
             .header(HttpHeaders.CONTENT_DISPOSITION, "result.vot")
             .build();
    }
-
-
 }

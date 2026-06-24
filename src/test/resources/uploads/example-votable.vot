@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<VOTABLE version="1.3" xmlns="http://www.ivoa.net/xml/VOTable/v1.3">
+  <RESOURCE type="results">
+    <TABLE>
+      <NAME>Stars</NAME>
+      <DESCRIPTION>Some bright stars</DESCRIPTION>
+      <FIELD ID="Star Name" ucd="ID_MAIN" datatype="A" width="10"/>
+      <FIELD ID="RA" ucd="POS_EQ_RA" unit="degrees" datatype="E" precision="5"/>
+      <FIELD ID="Dec" ucd="POS_EQ_DEC" unit="degrees" datatype="E" precision="5"/>
+      <DATA>
+        <TABLEDATA>
+          <TR><TD>Procyon</TD><TD>114.827242</TD><TD>5.227506</TD></TR>
+          <TR><TD>Vega</TD><TD>279.234106</TD><TD>38.782992</TD></TR>
+        </TABLEDATA>
+      </DATA>
+    </TABLE>
+  </RESOURCE>
+</VOTABLE>
