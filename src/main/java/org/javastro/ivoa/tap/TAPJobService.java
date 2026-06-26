@@ -19,4 +19,9 @@ public class TAPJobService {
     public TAPJob createJob(TAPJobSpecification spec) throws UWSException {
         return (TAPJob) tapHelper.jobmanager.createJob(spec);
     }
+
+    @Transactional
+    public boolean deleteJob(String jobId) throws UWSException {
+        return tapHelper.jobmanager.deleteJob(jobId);
+    }
 }

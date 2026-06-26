@@ -8,6 +8,7 @@ package org.javastro.ivoa.tap;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -22,9 +23,6 @@ import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
-
-import java.net.URI;
-import java.util.Map;
 
 /**
  * Main Async TAP Query.
@@ -58,6 +56,7 @@ public class AsyncQueryResource extends BaseUWSResource {
    //IMPL the two query endpoints are in different resources for routing purposes
     @POST
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
+    @Transactional
     public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                           @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                           @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
@@ -77,5 +76,23 @@ public class AsyncQueryResource extends BaseUWSResource {
       return RestResponse.ResponseBuilder.ok(path)
             .header(HttpHeaders.CONTENT_DISPOSITION, "result.vot")
             .build();
+   }
+
+   //----------------------- Need to make database modifying operations transactional ----------------------------------
+   // Which means the base UWS modifying tasks need to be wrapped in a transactional override
+   @Override
+   @DELETE
+   @Path("{jobid}")
+   @Transactional
+   public Response deleteJob(@PathParam("jobid")String jobid) throws UWSException {
+      return super.deleteJob(jobid);
+   }
+
+   @Override
+   @POST
+   @Path("{jobid}/phase")
+   @Transactional
+   public Response setPhase(@PathParam("jobid") String jobid, @FormParam("PHASE") String phase) throws UWSException {
+      return super.setPhase(jobid, phase);
    }
 }
