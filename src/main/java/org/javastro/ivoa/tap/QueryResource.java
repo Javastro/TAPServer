@@ -10,6 +10,7 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -32,11 +33,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.starlink.table.*;
 
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
 import java.time.Duration;
-import java.util.Map;
 
 /**
  * Main TAP Query.
@@ -55,6 +52,9 @@ public class QueryResource  {
 
    @Inject
    TAPHelper  tapHelper;
+
+   @Inject
+   TAPJobService jobService;
 
    private static final Logger log = LoggerFactory.getLogger(QueryResource.class);
 
@@ -82,7 +82,6 @@ public class QueryResource  {
       return handleJob(query, lang, responseformat, maxrec, runid, upload, input, uriInfo);
    }
 
-
    private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, MultipartFormDataInput input, UriInfo uriInfo) {
       final Duration SYNC_WAIT = Duration.ofSeconds(syncTimeoutSeconds);
       return Uni.createFrom().deferred(() -> {
@@ -92,9 +91,10 @@ public class QueryResource  {
             if(upload != null && !upload.isEmpty() ) {
                tapUploader = new QuarkusTapUploader(upload, input);
             }
-            job = (TAPJob) tapHelper.jobmanager.createJob(
-                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
-            );
+           // job = (TAPJob) tapHelper.jobmanager.createJob(
+           //       new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
+           // );
+            job = jobService.createJob(new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader));
 
             tapHelper.jobmanager.runJob(job.getID()); // automatically run the job
          } catch (UWSException e) {

@@ -10,18 +10,23 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.persistence.EntityManager;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.javastro.ivoa.entities.resource.Capability;
 import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
 import org.javastro.ivoacore.common.ServiceLocator;
 import org.javastro.ivoacore.tap.TAPJob;
+import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.schema.SchemaProvider;
 import org.javastro.ivoacore.tap.schema.VODMLSchemaProvider;
+import org.javastro.ivoacore.uws.JobFactoryAggregator;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.environment.DefaultEnvironmentFactory;
 import org.javastro.ivoacore.uws.environment.DefaultExecutionPolicy;
 import org.javastro.ivoacore.uws.environment.EnvironmentFactory;
-import org.javastro.ivoacore.uws.persist.MemoryBasedJobStore;
+import org.javastro.ivoacore.uws.persist.CachedJobStore;
+import org.javastro.ivoacore.uws.persist.DatabaseJobStore;
+import org.javastro.ivoacore.uws.persist.JobStore;
 import org.javastro.ivoacore.vosi.CapabilityBuilder;
 import org.javastro.ivoacore.vosi.VOSIProvider;
 
@@ -45,6 +50,9 @@ public class TapConfiguration {
 
    @Inject
    DataSource ds;
+
+   @Inject
+   EntityManager em;
 
    @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "false")
    boolean isDbCaseSensitive;
@@ -103,8 +111,23 @@ public class TapConfiguration {
       }
 
       EnvironmentFactory env = new DefaultEnvironmentFactory(tmpdir);
-      MemoryBasedJobStore store = new MemoryBasedJobStore();
+   //   MemoryBasedJobStore store = new MemoryBasedJobStore();
+
+      TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env);
+
+      JobFactoryAggregator factoryAggregator = new JobFactoryAggregator();
+      factoryAggregator.addFactory(tapJobFactory);
+
+      JobStore store = new CachedJobStore(
+              DatabaseJobStore.forJobType(
+                      em,
+                      TAPJobSpecification.class,
+                      "TAP",
+                      factoryAggregator
+              )
+      );
+      //CachedJobStore store = new CachedJobStore(new DatabaseJobStore(ds, em, ));
       DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
-      return new JobManager(new TAPJob.JobFactory(ds, schemaProvider, env), store, policy);
+      return new JobManager(factoryAggregator, store, policy);
    }
 }
