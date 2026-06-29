@@ -14,6 +14,7 @@ import jakarta.persistence.EntityManager;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.javastro.ivoa.entities.resource.Capability;
 import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
+import org.javastro.ivoa.quarkus.tap.TAPHelper;
 import org.javastro.ivoacore.common.ServiceLocator;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
@@ -130,4 +131,11 @@ public class TapConfiguration {
       DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
       return new JobManager(factoryAggregator, store, policy);
    }
+
+   @Produces
+   @Singleton
+   TAPHelper tapHelper( JobManager jobManager, ServiceLocator serviceLocator) {
+      return new TAPHelper(jobManager, serviceLocator);
+   }
+
 }

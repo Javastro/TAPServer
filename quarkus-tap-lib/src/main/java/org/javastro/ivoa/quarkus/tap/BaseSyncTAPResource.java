@@ -3,21 +3,20 @@
  *
  */
 
-package org.javastro.ivoa.tap;
+package org.javastro.ivoa.quarkus.tap;
 
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.javastro.ivoa.entities.uws.ExecutionPhase;
-import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
+import org.javastro.ivoa.quarkus.tap.upload.QuarkusTapUploader;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.TAPWriter;
@@ -29,16 +28,11 @@ import org.jboss.resteasy.reactive.RestQuery;
 import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.starlink.table.*;
-import org.javastro.ivoa.quarkus.tap.BaseSyncTAPResource;
-import org.javastro.ivoa.quarkus.tap.TAPHelper;
+import uk.ac.starlink.table.ColumnInfo;
+import uk.ac.starlink.table.RowListStarTable;
 
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Map;
 
 /**
  * Main TAP Query.
@@ -47,26 +41,27 @@ import java.util.Map;
  * The client can then poll the async endpoint if they want to wait longer.
  * Created on 04/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
  */
-@Tag(name = "TAP Query", description = "the TAP query endpoints")
-@ApplicationScoped
-@Path("sync")
-public class QueryResource extends BaseSyncTAPResource {
+public abstract class BaseSyncTAPResource {
 
+   protected static final Logger log = LoggerFactory.getLogger(BaseSyncTAPResource.class);
 
-   @ConfigProperty(name="ivoa.tap.sync-timeout-seconds", defaultValue = "5")
-   int syncTimeoutSeconds;
+   /**
+    * supply and appropriate TAPHelper implementation for the specific service.
+    * @return The TAPHelper.
+    */
+   abstract protected TAPHelper getTapHelper();
 
-
-   @Inject
-   TAPJobService jobService;
-
-   private static final Logger log = LoggerFactory.getLogger(QueryResource.class);
+   /**
+    * supply the sync wait time before the synchronous call times out..
+    * @return the wait time in seconds.
+    */
+   abstract protected int getSyncWait();
 
    @GET
    @Produces("application/x-votable+xml")
-   public Uni<java.nio.file.Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
-                                                     @RestQuery String upload,
-                                                     @Context UriInfo uriInfo) {
+   public Uni<Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
+                            @RestQuery String upload,
+                            @Context UriInfo uriInfo) {
 
       return handleJob(query, lang, responseformat, maxrec, runid, upload, null, uriInfo);
    }
@@ -78,16 +73,17 @@ public class QueryResource extends BaseSyncTAPResource {
    @POST
    @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
    @Produces("application/x-votable+xml")
-   public Uni<java.nio.file.Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
-                                           @RestForm("UPLOAD") String upload,
-                                           MultipartFormDataInput input,
-                                           @Context UriInfo uriInfo) {
+   public Uni<Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
+                             @RestForm("UPLOAD") String upload,
+                             MultipartFormDataInput input,
+                             @Context UriInfo uriInfo) {
 
       return handleJob(query, lang, responseformat, maxrec, runid, upload, input, uriInfo);
    }
 
-   private Uni<java.nio.file.Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, MultipartFormDataInput input, UriInfo uriInfo) {
-      final Duration SYNC_WAIT = Duration.ofSeconds(syncTimeoutSeconds);
+
+   protected Uni<Path> handleJob(String query, String lang, String responseformat, Long maxrec, String runid, String upload, MultipartFormDataInput input, UriInfo uriInfo) {
+      final Duration SYNC_WAIT = Duration.ofSeconds(getSyncWait());
       return Uni.createFrom().deferred(() -> {
          final TAPJob job;
          try {
@@ -95,12 +91,11 @@ public class QueryResource extends BaseSyncTAPResource {
             if(upload != null && !upload.isEmpty() ) {
                tapUploader = new QuarkusTapUploader(upload, input);
             }
-           // job = (TAPJob) tapHelper.jobmanager.createJob(
-           //       new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
-           // );
-            job = jobService.createJob(new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader));
+            job = (TAPJob) getTapHelper().getJobmanager().createJob(
+                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
+            );
 
-            tapHelper.jobmanager.runJob(job.getID()); // automatically run the job
+            getTapHelper().getJobmanager().runJob(job.getID()); // automatically run the job
          } catch (UWSException e) {
             return Uni.createFrom().failure(e);
          }
@@ -127,10 +122,10 @@ public class QueryResource extends BaseSyncTAPResource {
       }).runSubscriptionOn(Infrastructure.getDefaultExecutor()); //TODO review whether this is the right way to do this - We might want to use a dedicated thread pool for this or some other strategy for managing the threads.
    }
 
-   private Uni<java.nio.file.Path> successResponse(TAPJob job) {
+   private Uni<Path> successResponse(TAPJob job) {
           return Uni.createFrom().item(() -> {
              try {
-                return tapHelper.getResultPath(job.getID());
+                return getTapHelper().getResultPath(job.getID());
              } catch (UWSException e) {
                 throw new RuntimeException("Failed to get result path for job " + job.getID(), e);
              }
@@ -139,7 +134,7 @@ public class QueryResource extends BaseSyncTAPResource {
 
    //TODO do we always want to return a VOTable even for errors? Or should we allow some other error response?
    //TODO perhaps some of this can be moved to the TAPJob itself (for dealing with other types of errors - e.g. failure to parse original query)
-   protected java.nio.file.Path buildErrorVOTable(TAPJob job, UWSException exception, boolean timeout) {
+   protected Path buildErrorVOTable(TAPJob job, UWSException exception, boolean timeout) {
       // create a VOTable with STIL that has the error message and return the path to it. We could also include some info from the job if we have it.
 
       TAPJobSpecification tapJobSpec = (TAPJobSpecification) job.getJobSpecification();
@@ -155,10 +150,10 @@ public class QueryResource extends BaseSyncTAPResource {
             table.addRow(new Object[]{exception.getMessage()});
          }
          if(timeout) {
-            tableWriter.setTimeoutInfo(tapHelper.asyncJobUri(job.getID()));
+            tableWriter.setTimeoutInfo(getTapHelper().asyncJobUri(job.getID()));
          }
 
-         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("error", ".vot");
+         Path tempFile = java.nio.file.Files.createTempFile("error", ".vot");
          try (java.io.OutputStream out = java.nio.file.Files.newOutputStream(tempFile)) {
 
             tableWriter.writeStarTable(table, out);
