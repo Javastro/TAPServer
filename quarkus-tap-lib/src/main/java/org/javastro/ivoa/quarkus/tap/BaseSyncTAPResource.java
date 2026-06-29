@@ -8,6 +8,7 @@ package org.javastro.ivoa.quarkus.tap;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -42,6 +43,9 @@ import java.time.Duration;
  * Created on 04/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
  */
 public abstract class BaseSyncTAPResource {
+
+   @Inject
+   TAPJobService jobService;
 
    protected static final Logger log = LoggerFactory.getLogger(BaseSyncTAPResource.class);
 
@@ -91,9 +95,7 @@ public abstract class BaseSyncTAPResource {
             if(upload != null && !upload.isEmpty() ) {
                tapUploader = new QuarkusTapUploader(upload, input);
             }
-            job = (TAPJob) getTapHelper().getJobmanager().createJob(
-                  new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader)
-            );
+            job = jobService.createJob(new TAPJobSpecification(query, lang, responseformat, maxrec, runid, tapUploader));
 
             getTapHelper().getJobmanager().runJob(job.getID()); // automatically run the job
          } catch (UWSException e) {

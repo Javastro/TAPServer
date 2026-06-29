@@ -9,24 +9,9 @@ package org.javastro.ivoa.tap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.javastro.ivoa.tap.upload.QuarkusTapUploader;
-import org.javastro.ivoacore.tap.TAPJobSpecification;
-import org.javastro.ivoacore.tap.upload.NullUploader;
-import org.javastro.ivoacore.tap.upload.TAPUploadCacher;
-import org.javastro.ivoacore.uws.BaseUWSJob;
-import org.javastro.ivoacore.uws.JobManager;
-import org.javastro.ivoacore.uws.UWSException;
-import org.javastro.ivoacore.uws.webapi.BaseUWSResource;
-import org.jboss.resteasy.reactive.RestForm;
-import org.jboss.resteasy.reactive.RestResponse;
-import org.jboss.resteasy.reactive.server.multipart.MultipartFormDataInput;
 import org.javastro.ivoa.quarkus.tap.BaseAsyncTAPResource;
 import org.javastro.ivoa.quarkus.tap.TAPHelper;
-
-import java.net.URI;
-import java.util.Map;
 
 /**
  * Main Async TAP Query.
@@ -41,62 +26,7 @@ public class AsyncQueryResource extends BaseAsyncTAPResource {
    TAPHelper tapHelper;
 
    @Override
-   protected JobManager getJobManager() {
-      return tapHelper.jobmanager;
-   }
-
-   @Override
-   protected Response redirectToJob(String jobid)  {
-
-      final UriBuilder urib = UriBuilder.fromUri(tapHelper.serviceLocator.serviceURI())
-            .path("async");
-      if (jobid != null && !jobid.isEmpty()) {
-         urib.path(jobid);
-      }
-      return Response.seeOther(urib
-            .build()).build();
-   }
-
-   //IMPL the two query endpoints are in different resources for routing purposes
-    @POST
-    @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
-    @Transactional
-    public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
-                          @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
-                          @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
-       TAPUploadCacher tapUploader = new NullUploader();
-       if(upload != null && !upload.isEmpty() ) {
-         tapUploader = new QuarkusTapUploader(upload, input);
-       }
-       BaseUWSJob job = tapHelper.jobmanager.createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,tapUploader));
-       return Response.seeOther(tapHelper.asyncJobUri(job.getID())).build();
-    }
-
-   @GET
-   @Path("{jobid}/results/result")
-   @Produces("application/x-votable+xml")
-   public RestResponse<java.nio.file.Path> getVotable(@PathParam("jobid") String jobid) throws UWSException {
-      final java.nio.file.Path path = tapHelper.getResultPath(jobid);
-      return RestResponse.ResponseBuilder.ok(path)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "result.vot")
-            .build();
-   }
-
-   //----------------------- Need to make database modifying operations transactional ----------------------------------
-   // Which means the base UWS modifying tasks need to be wrapped in a transactional override
-   @Override
-   @DELETE
-   @Path("{jobid}")
-   @Transactional
-   public Response deleteJob(@PathParam("jobid")String jobid) throws UWSException {
-      return super.deleteJob(jobid);
-   }
-
-   @Override
-   @POST
-   @Path("{jobid}/phase")
-   @Transactional
-   public Response setPhase(@PathParam("jobid") String jobid, @FormParam("PHASE") String phase) throws UWSException {
-      return super.setPhase(jobid, phase);
+   protected TAPHelper getTapHelper() {
+      return tapHelper;
    }
 }

@@ -1,4 +1,4 @@
-package org.javastro.ivoa.tap;
+package org.javastro.ivoa.quarkus.tap;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -26,6 +26,6 @@ public class TAPJobService {
 
     @Transactional
     public TAPJob createJob(TAPJobSpecification spec) throws UWSException {
-        return (TAPJob) tapHelper.jobmanager.createJob(spec);
+        return (TAPJob) tapHelper.getJobmanager().createJob(spec);
     }
 }
