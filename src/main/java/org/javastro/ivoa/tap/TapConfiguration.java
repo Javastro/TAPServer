@@ -6,6 +6,7 @@
 package org.javastro.ivoa.tap;
 
 
+import io.quarkus.hibernate.orm.PersistenceUnit;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -53,6 +54,7 @@ public class TapConfiguration {
    DataSource ds;
 
    @Inject
+   @PersistenceUnit("uwsstore")
    EntityManager em;
 
    @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "false")
