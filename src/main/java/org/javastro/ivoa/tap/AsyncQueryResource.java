@@ -29,5 +29,4 @@ public class AsyncQueryResource extends BaseAsyncTAPResource {
    protected TAPHelper getTapHelper() {
       return tapHelper;
    }
-
 }

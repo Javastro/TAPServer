@@ -26,14 +26,11 @@ import org.javastro.ivoa.quarkus.tap.TAPHelper;
 @Path("sync")
 public class QueryResource extends BaseSyncTAPResource {
 
-
    @ConfigProperty(name="ivoa.tap.sync-timeout-seconds", defaultValue = "5")
    int syncTimeoutSeconds;
 
-
    @Inject
    TAPHelper tapHelper;
-
 
    @Override
    protected TAPHelper getTapHelper() {

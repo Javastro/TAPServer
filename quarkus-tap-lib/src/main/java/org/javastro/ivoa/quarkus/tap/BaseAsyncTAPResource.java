@@ -6,6 +6,7 @@
 package org.javastro.ivoa.quarkus.tap;
 
 
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.javastro.ivoa.quarkus.tap.upload.QuarkusTapUploader;
@@ -46,18 +47,19 @@ public abstract class BaseAsyncTAPResource extends BaseUWSResource {
    }
 
    //IMPL the two query endpoints are in different resources for routing purposes
-    @POST
-    @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
-    public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
-                          @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
-                          @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
-       TAPUploadCacher tapUploader = new NullUploader();
-       if(upload != null && !upload.isEmpty() ) {
+   @POST
+   @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.MULTIPART_FORM_DATA})
+   @Transactional
+   public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
+                         @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
+                         @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
+      TAPUploadCacher tapUploader = new NullUploader();
+      if(upload != null && !upload.isEmpty() ) {
          tapUploader = new QuarkusTapUploader(upload, input);
-       }
-       BaseUWSJob job = getTapHelper().getJobmanager().createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,tapUploader));
-       return Response.seeOther(getTapHelper().asyncJobUri(job.getID())).build();
-    }
+      }
+      BaseUWSJob job = getTapHelper().getJobmanager().createJob(new TAPJobSpecification(query,lang,responseformat,maxrec,runid,tapUploader));
+      return Response.seeOther(getTapHelper().asyncJobUri(job.getID())).build();
+   }
 
    @GET
    @Path("{jobid}/results/result")
@@ -67,5 +69,23 @@ public abstract class BaseAsyncTAPResource extends BaseUWSResource {
       return RestResponse.ResponseBuilder.ok(path)
             .header(HttpHeaders.CONTENT_DISPOSITION, "result.vot")
             .build();
+   }
+
+//----------------------- Need to make database modifying operations transactional ----------------------------------
+// Which means the base UWS modifying tasks need to be wrapped in a transactional override
+   @Override
+   @DELETE
+   @Path("{jobid}")
+   @Transactional
+   public Response deleteJob(@PathParam("jobid")String jobid) throws UWSException {
+      return super.deleteJob(jobid);
+   }
+
+   @Override
+   @POST
+   @Path("{jobid}/phase")
+   @Transactional
+   public Response setPhase(@PathParam("jobid") String jobid, @FormParam("PHASE") String phase) throws UWSException {
+      return super.setPhase(jobid, phase);
    }
 }
