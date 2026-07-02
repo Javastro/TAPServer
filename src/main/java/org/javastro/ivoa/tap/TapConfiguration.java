@@ -114,24 +114,18 @@ public class TapConfiguration {
       }
 
       EnvironmentFactory env = new DefaultEnvironmentFactory(tmpdir);
-   //   MemoryBasedJobStore store = new MemoryBasedJobStore();
 
       TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env);
-
-      JobFactoryAggregator factoryAggregator = new JobFactoryAggregator();
-      factoryAggregator.addFactory(tapJobFactory);
 
       JobStore store = new CachedJobStore(
               DatabaseJobStore.forJobType(
                       em,
                       TAPJobSpecification.class,
-                      "TAP",
-                      factoryAggregator
+                      "TAP"
               )
       );
-      //CachedJobStore store = new CachedJobStore(new DatabaseJobStore(ds, em, ));
       DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
-      return new JobManager(factoryAggregator, store, policy);
+      return new JobManager(tapJobFactory, store, policy);
    }
 
    @Produces
