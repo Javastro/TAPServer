@@ -53,6 +53,7 @@ public abstract class BaseAsyncTAPResource extends BaseUWSResource {
    public Response async(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat,
                          @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                          @RestForm("UPLOAD") String upload, MultipartFormDataInput input, @Context UriInfo uriInfo) throws UWSException {
+      getTapHelper().checkUnknownParameters(uriInfo);
       TAPUploadCacher tapUploader = new NullUploader();
       if(upload != null && !upload.isEmpty() ) {
          tapUploader = new QuarkusTapUploader(upload, input);

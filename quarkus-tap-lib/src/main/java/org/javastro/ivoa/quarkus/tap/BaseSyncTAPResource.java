@@ -65,8 +65,8 @@ public abstract class BaseSyncTAPResource {
    @Produces("application/x-votable+xml")
    public Uni<Path> syncGet(@RestQuery String query, @RestQuery String lang, @RestQuery String responseformat, @RestQuery Long maxrec, @RestQuery String runid,
                             @RestQuery String upload,
-                            @Context UriInfo uriInfo) {
-
+                            @Context UriInfo uriInfo) throws UWSException {
+      getTapHelper().checkUnknownParameters(uriInfo);
       return handleJob(query, lang, responseformat, maxrec, runid, upload, null, uriInfo);
    }
 
@@ -80,8 +80,8 @@ public abstract class BaseSyncTAPResource {
    public Uni<Path> syncPost(@RestForm("QUERY") String query, @RestForm("LANG") String lang, @RestForm("RESPONSEFORMAT") String responseformat, @RestForm("MAXREC") Long maxrec, @RestForm("RUNID") String runid,
                              @RestForm("UPLOAD") String upload,
                              MultipartFormDataInput input,
-                             @Context UriInfo uriInfo) {
-
+                             @Context UriInfo uriInfo) throws UWSException {
+      getTapHelper().checkUnknownParameters(uriInfo);
       return handleJob(query, lang, responseformat, maxrec, runid, upload, input, uriInfo);
    }
 
