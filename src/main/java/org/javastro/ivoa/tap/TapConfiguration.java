@@ -6,6 +6,7 @@
 package org.javastro.ivoa.tap;
 
 
+import com.fasterxml.jackson.databind.jsontype.NamedType;
 import io.quarkus.hibernate.orm.PersistenceUnit;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -117,11 +118,10 @@ public class TapConfiguration {
 
       TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env);
 
+
       JobStore store = new CachedJobStore(
-              DatabaseJobStore.forJobType(
-                      em,
-                      TAPJobSpecification.class,
-                      "TAP"
+           new  DatabaseJobStore(em,
+                     List.of(new NamedType(TAPJobSpecification.class, TAPJob.JOB_TYPE))
               )
       );
       DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
