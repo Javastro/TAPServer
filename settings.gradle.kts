@@ -30,5 +30,5 @@ dependencyResolutionManagement {
 
 rootProject.name="tap-server"
 
-include("quarkus-tap-lib")
+
 
