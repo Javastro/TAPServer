@@ -43,7 +43,7 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        cache-disabled: false
+        cache-disabled: true
         cache-overwrite-existing: true
     - name: Run demo model Gradle build
       working-directory: ./demoModel
@@ -51,7 +51,7 @@ jobs:
 
     - name: Run main Gradle build
       working-directory: ./main
-      run: ./gradlew build -x test -Dquarkus.container-image.builder=none
+      run: ./gradlew build -x test --full-stacktrace -Dquarkus.container-image.builder=none
 
     - name: Upload interface definition
       uses: actions/upload-artifact@v4
