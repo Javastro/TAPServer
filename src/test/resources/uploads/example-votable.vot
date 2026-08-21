@@ -4,9 +4,9 @@
     <TABLE>
       <NAME>Stars</NAME>
       <DESCRIPTION>Some bright stars</DESCRIPTION>
-      <FIELD ID="Star Name" ucd="ID_MAIN" datatype="A" width="10"/>
-      <FIELD ID="RA" ucd="POS_EQ_RA" unit="degrees" datatype="E" precision="5"/>
-      <FIELD ID="Dec" ucd="POS_EQ_DEC" unit="degrees" datatype="E" precision="5"/>
+      <FIELD ID="Star Name" ucd="ID_MAIN" datatype="char" arraysize="10" width="10"/>
+      <FIELD ID="RA" ucd="POS_EQ_RA" unit="degrees" datatype="double" precision="5"/>
+      <FIELD ID="Dec" ucd="POS_EQ_DEC" unit="degrees" datatype="double" precision="5"/>
       <DATA>
         <TABLEDATA>
           <TR><TD>Procyon</TD><TD>114.827242</TD><TD>5.227506</TD></TR>
