@@ -41,3 +41,4 @@ nb-configuration.xml
 .certs/
 /TAP_drop_ddl.sql
 /TAPddl.sql
+/.quarkus/

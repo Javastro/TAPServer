@@ -1,31 +1,21 @@
 pluginManagement {
-    val quarkusPluginVersion: String by settings
-    val quarkusPluginId: String by settings
     repositories {
-        mavenCentral()
         gradlePluginPortal()
+        maven("https://repo.dev.uksrc.org/repository/maven-public/")
         mavenLocal()
     }
-    plugins {
-        id(quarkusPluginId) version quarkusPluginVersion
-    }
+
 }
 dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
+//    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        mavenLocal()
         mavenCentral()
-        /*
-        add this repository to pick up the SNAPSHOT version of the IVOA base library - in the future when this
-        will not be necessary when this library is released as a non-SNAPSHOT version.
-         */
-        maven {
-            url= uri("https://central.sonatype.com/repository/maven-snapshots/")
-        }
-        //TODO - Vollt TAP dependencies from our repo (updated to Jakarta)
-        maven {
-            url= uri("https://repo.dev.uksrc.org/repository/maven-public/")
-        }
     }
+}
+
+plugins {
+    id("org.javastro.build") version "0.1"
 }
 
 rootProject.name="tap-server"

@@ -1,12 +1,6 @@
 plugins {
-    java
-    id("io.quarkus")
+    id("org.javastro.build.module.quarkus-app")
 }
-
-
-val quarkusPlatformGroupId: String by project
-val quarkusPlatformArtifactId: String by project
-val quarkusPlatformVersion: String by project
 
 dependencies {
     implementation(platform("org.javastro:bom:2026.2"))
@@ -17,13 +11,8 @@ dependencies {
     //cannot include the demo when including the above because of classloader problems
     implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT")
     implementation("org.javastro.ivoa.dm:DemoDM:0.1-SNAPSHOT:test")
-    implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-rest-jaxb")
     implementation("net.sf.saxon:Saxon-HE:12.5")
-    implementation("io.quarkus:quarkus-kubernetes")
-    implementation("io.quarkus:quarkus-kubernetes-config") // possibly not necessary https://quarkus.io/guides/kubernetes-config has alternative
-    implementation("io.quarkiverse.helm:quarkus-helm:1.2.6")
-    implementation("io.quarkus:quarkus-container-image-docker")
     implementation("io.quarkus:quarkus-rest-jsonb")
     implementation("io.quarkus:quarkus-smallrye-openapi")
 //    implementation("io.quarkus:quarkus-reactive-pg-client")  // reactive client does not inject entitymanager

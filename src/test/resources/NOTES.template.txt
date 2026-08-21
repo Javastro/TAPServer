@@ -1,0 +1,4 @@
+{{ .Chart.Name }} has been installed
+
+It is an IVOA TAP implementation that can run ADQL queries against databases.
+
