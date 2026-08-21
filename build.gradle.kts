@@ -44,7 +44,7 @@ tasks.withType<JavaCompile> {
 }
 
 // should not be needed https://github.com/quarkusio/quarkus/discussions/40427 https://github.com/quarkusio/quarkus/issues/38996
-tasks.named<JavaCompile>("compileJava") {
-    dependsOn(tasks.named("compileQuarkusGeneratedSourcesJava"))
-}
+//tasks.named<JavaCompile>("compileJava") {
+//    dependsOn(tasks.named("compileQuarkusGeneratedSourcesJava"))
+//}
 
