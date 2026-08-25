@@ -19,23 +19,9 @@ jobs:
     steps:
     - name: Checkout this  repo
       uses: actions/checkout@v4
-      with:
-          path: main
-
-    - name: Checkout ivoacore
-      uses: actions/checkout@v4
-      with:
-        repository: javastro/ivoacore
-        path: ivoacore
-
-    - name: Checkout DemoModel
-      uses: actions/checkout@v4
-      with:
-        repository: javastro/DemoModel
-        path: demoModel
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -45,12 +31,9 @@ jobs:
       with:
         cache-disabled: true
         cache-overwrite-existing: true
-    - name: Run demo model Gradle build
-      working-directory: ./demoModel
-      run: ./gradlew -x test clean  publishtomavenlocal
+
 
     - name: Run main Gradle build
-      working-directory: ./main
       run: ./gradlew build -x test --full-stacktrace -Dquarkus.container-image.builder=none
 
     - name: Upload interface definition
@@ -62,13 +45,11 @@ jobs:
         path: ./main/build/generated/openapi/openapi.yaml
 
     - name: Run Gradle test
-      working-directory: ./main
       run: ./gradlew  --info test
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
       with:
         files: |
-          main/build/test-results/**/*.xml
+          build/test-results/**/*.xml
           
