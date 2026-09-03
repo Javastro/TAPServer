@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 }
 
 plugins {
-    id("org.javastro.build") version "0.2.5"
+    id("org.javastro.build") version "0.2.6"
 }
 
 rootProject.name="tap-server"
