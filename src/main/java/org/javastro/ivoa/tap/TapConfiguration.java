@@ -58,7 +58,7 @@ public class TapConfiguration {
    @PersistenceUnit("uwsstore")
    EntityManager em;
 
-   @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "false")
+   @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "true")
    boolean isDbCaseSensitive;
 
    @ConfigProperty(name="ivoa.baseAddress", defaultValue = "http://localhost:8080/")
