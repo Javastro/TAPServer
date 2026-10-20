@@ -22,7 +22,6 @@ import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
 import org.javastro.ivoacore.tap.schema.SchemaProvider;
 import org.javastro.ivoacore.tap.schema.VODMLSchemaProvider;
-import org.javastro.ivoacore.uws.JobFactoryAggregator;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.environment.DefaultEnvironmentFactory;
 import org.javastro.ivoacore.uws.environment.DefaultExecutionPolicy;
@@ -64,6 +63,9 @@ public class TapConfiguration {
    @ConfigProperty(name="ivoa.baseAddress", defaultValue = "http://localhost:8080/")
    URI baseURI;
 
+   @ConfigProperty(name="ivoa.tap.useTapTypesInVOSI", defaultValue = "true")
+   boolean useTapTypesInVOSI;
+
 
    @Produces
    @Singleton
@@ -100,7 +102,7 @@ public class TapConfiguration {
    @Produces
    @Singleton
    SchemaProvider schema(){
-      return new VODMLSchemaProvider(tapSchemaResource, isDbCaseSensitive);
+      return new VODMLSchemaProvider(tapSchemaResource, isDbCaseSensitive, useTapTypesInVOSI);
    }
 
    @Produces

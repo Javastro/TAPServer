@@ -4,12 +4,12 @@ plugins {
 
 dependencies {
     implementation(platform("org.javastro:bom:2026.2"))
-    implementation("org.javastro.ivoa.core:tap:0.9.0")
+    implementation("org.javastro.ivoa.core:tap:0.9.2")
     implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.0")
-    implementation("org.javastro.ivoa.core:dal:0.9.0")
-    implementation("org.javastro.ivoa.core:pgsphere:0.9.1")
-    implementation("org.javastro.ivoa.dm:DemoDM:0.1")
-    implementation("org.javastro.ivoa.dm:DemoDM:0.1:test")
+    implementation("org.javastro.ivoa.core:dal:0.9.1")
+    implementation("org.javastro.ivoa.core:pgsphere:0.9.2")
+    implementation("org.javastro.ivoa.dm:DemoDM:0.2")
+    implementation("org.javastro.ivoa.dm:DemoDM:0.2:test")
     implementation("io.quarkus:quarkus-rest-jaxb")
     implementation("net.sf.saxon:Saxon-HE:12.5")
     implementation("io.quarkus:quarkus-rest-jsonb")
@@ -23,16 +23,22 @@ dependencies {
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
     testImplementation("org.awaitility:awaitility:4.3.0")
+
+    constraints {
+        implementation("org.javastro.ivoa:ivoa-entities:0.9.15") {
+            because("previous version had h2db in dependencies, which is not needed and causes problems with quarkus native-executable")
+        }
+
+
+    }
+
 }
 
 group = "org.javastro.ivoa.servers"
 
 
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
+
 
 tasks.withType<Test> {
     systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
