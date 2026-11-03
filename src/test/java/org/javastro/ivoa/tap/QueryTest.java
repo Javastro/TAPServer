@@ -69,7 +69,7 @@ public class QueryTest extends AbstractTAPTest {
             .when().get(jobUrl + "/executionduration")
             .then()
             .statusCode(200)
-            .body(comparesEqualTo("3600")); //IMPL have to do string comparison?
+            .body(comparesEqualTo("300")); //IMPL have to do string comparison?
 
       ZonedDateTime destruction =  ZonedDateTime.parse(given()
             .when().get(jobUrl + "/destruction")
