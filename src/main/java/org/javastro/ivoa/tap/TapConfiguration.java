@@ -20,11 +20,11 @@ import org.javastro.ivoa.quarkus.tap.TAPHelper;
 import org.javastro.ivoacore.common.ServiceLocator;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
+import org.javastro.ivoacore.tap.TapExecutionPolicy;
 import org.javastro.ivoacore.tap.schema.SchemaProvider;
 import org.javastro.ivoacore.tap.schema.VODMLSchemaProvider;
 import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.environment.DefaultEnvironmentFactory;
-import org.javastro.ivoacore.uws.environment.DefaultExecutionPolicy;
 import org.javastro.ivoacore.uws.environment.EnvironmentFactory;
 import org.javastro.ivoacore.uws.persist.CachedJobStore;
 import org.javastro.ivoacore.uws.persist.DatabaseJobStore;
@@ -49,6 +49,9 @@ public class TapConfiguration {
 
    @ConfigProperty(name="ivoa.tap.schema")
    String tapSchemaResource;
+
+   @Inject
+   TapExecutionPolicy tapExecutionPolicy;
 
    @Inject
    DataSource ds;
@@ -89,7 +92,10 @@ public class TapConfiguration {
                url = new URL(baseURI.toURL(), "VOSI");//IMPL - this needs to be the same as the root in {@see org.javastro.ivoa.tap.VOSIResource }
                // standard VOSI ones
                final List<Capability> capabilities = CapabilityBuilder.createVOSICapabilities(url);
-               capabilities.addAll(CapabilityBuilder.createTAPCapabilities(baseURI.toURL()));
+               capabilities.addAll(CapabilityBuilder.createTAPCapabilities(baseURI.toURL(),
+                     tapExecutionPolicy.maxRec(), tapExecutionPolicy.getDefaultLifetime(),
+                     tapExecutionPolicy.getMaxLifetime(),
+                     tapExecutionPolicy.getMaxRunTime()));
 
                return Capabilities.builder().addCapabilities(capabilities).build();
             } catch (MalformedURLException e) {
@@ -115,19 +121,17 @@ public class TapConfiguration {
       } catch (IOException e) {
          throw new RuntimeException("temporary directory not available", e);
       }
-
       EnvironmentFactory env = new DefaultEnvironmentFactory(tmpdir);
 
-      TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env);
-
+      TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env, tapExecutionPolicy);
 
       JobStore store = new CachedJobStore(
            new  DatabaseJobStore(em,
                      List.of(new NamedType(TAPJobSpecification.class, TAPJob.JOB_TYPE))
               )
       );
-      DefaultExecutionPolicy policy = new DefaultExecutionPolicy();
-      return new JobManager(tapJobFactory, store, policy);
+
+      return new JobManager(tapJobFactory, store, tapExecutionPolicy);
    }
 
    @Produces

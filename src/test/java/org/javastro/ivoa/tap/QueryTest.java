@@ -7,9 +7,14 @@ package org.javastro.ivoa.tap;
 
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -64,15 +69,16 @@ public class QueryTest extends AbstractTAPTest {
             .when().get(jobUrl + "/executionduration")
             .then()
             .statusCode(200)
-            .body(comparesEqualTo("0")); //IMPL have to do string comparison?
-// TODO add more tests when all of UWS is implemented.
-//      given()
-//            .when().get(jobUrl + "/destruction")
-//            .then()
-//            .statusCode(200)
-//            .log().body();
+            .body(comparesEqualTo("3600")); //IMPL have to do string comparison?
 
-      startAndTestJob(jobUrl);
+      ZonedDateTime destruction =  ZonedDateTime.parse(given()
+            .when().get(jobUrl + "/destruction")
+            .then()
+            .statusCode(200)
+            .contentType(ContentType.TEXT)
+            .log().body().extract().asString(), DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC));
+      
+   startAndTestJob(jobUrl);
    }
 
 
