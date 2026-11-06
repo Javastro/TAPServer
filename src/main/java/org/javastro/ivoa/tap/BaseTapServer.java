@@ -27,7 +27,7 @@ public class BaseTapServer  {
    @Transactional
    void onStart(@Observes StartupEvent ev) {
        log.info("Starting tap server");
-       Long i = em.createQuery("select count(o) from Schema o", Long.class).getSingleResult();
+       Long i = em.createQuery("select count(o) from schemas o", Long.class).getSingleResult();
        if(i == 0) {
            log.info("populating tap schema");
            for(var s: schemaProvider.getSchemas()) {
