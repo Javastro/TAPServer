@@ -8,7 +8,7 @@ import org.javastro.ivoacore.vosi.BaseVOSIResource;
 import org.javastro.ivoacore.vosi.VOSIProvider;
 
 @Tag(name="VOSI", description = "the standard VOSI endpoints")
-@Path("/VOSI")
+@Path("/tap")
 public class VOSIResource extends BaseVOSIResource {
    @Inject
    public VOSIResource(VOSIProvider provider) {
