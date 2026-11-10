@@ -17,6 +17,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.javastro.ivoa.entities.resource.Capability;
 import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
 import org.javastro.ivoa.quarkus.tap.TAPHelper;
+import org.javastro.ivoa.quarkus.uws.TransactionalDatabaseStore;
 import org.javastro.ivoacore.common.ServiceLocator;
 import org.javastro.ivoacore.tap.TAPJob;
 import org.javastro.ivoacore.tap.TAPJobSpecification;
@@ -126,7 +127,7 @@ public class TapConfiguration {
       TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env, tapExecutionPolicy);
 
       JobStore store = new CachedJobStore(
-           new  DatabaseJobStore(em,
+           new TransactionalDatabaseStore(em,
                      List.of(new NamedType(TAPJobSpecification.class, TAPJob.JOB_TYPE))
               )
       );
