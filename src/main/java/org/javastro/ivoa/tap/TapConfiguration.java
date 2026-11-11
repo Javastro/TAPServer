@@ -28,7 +28,6 @@ import org.javastro.ivoacore.uws.JobManager;
 import org.javastro.ivoacore.uws.environment.DefaultEnvironmentFactory;
 import org.javastro.ivoacore.uws.environment.EnvironmentFactory;
 import org.javastro.ivoacore.uws.persist.CachedJobStore;
-import org.javastro.ivoacore.uws.persist.DatabaseJobStore;
 import org.javastro.ivoacore.uws.persist.JobStore;
 import org.javastro.ivoacore.vosi.CapabilityBuilder;
 import org.javastro.ivoacore.vosi.VOSIProvider;
@@ -59,7 +58,7 @@ public class TapConfiguration {
 
    @Inject
    @PersistenceUnit("uwsstore")
-   EntityManager em;
+   EntityManager em_uws;
 
    @ConfigProperty(name="ivoa.tap.dbCaseSensitive", defaultValue = "true")
    boolean isDbCaseSensitive;
@@ -127,7 +126,7 @@ public class TapConfiguration {
       TAPJob.JobFactory tapJobFactory = new TAPJob.JobFactory(ds, schemaProvider, env, tapExecutionPolicy);
 
       JobStore store = new CachedJobStore(
-           new TransactionalDatabaseStore(em,
+           new TransactionalDatabaseStore(em_uws,
                      List.of(new NamedType(TAPJobSpecification.class, TAPJob.JOB_TYPE))
               )
       );

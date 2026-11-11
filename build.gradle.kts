@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
-    implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.1")
+    implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.2-SNAPSHOT")
     implementation("org.javastro.ivoa.core.quarkus:quarkus-uws:0.9.0")
-    implementation("org.javastro.ivoa.core:tap:0.9.3")
+    implementation("org.javastro.ivoa.core:tap:0.9.4-SNAPSHOT")
     implementation("org.javastro.ivoa.core:dal:0.9.2")
 
     implementation("org.javastro.ivoa.core:pgsphere:0.9.2")
@@ -29,7 +29,7 @@ dependencies {
         implementation("org.javastro.ivoa:ivoa-entities:0.9.15") {
             because("previous version had h2db in dependencies, which is not needed and causes problems with quarkus native-executable")
         }
-        implementation("org.javastro.ivoa.dm:tapschema:0.9.14-SNAPSHOT")
+        implementation("org.javastro.ivoa.dm:tapschema:0.9.15-SNAPSHOT")
 
 
     }
