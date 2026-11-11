@@ -67,7 +67,7 @@ public class TapConfiguration {
    @ConfigProperty(name="ivoa.baseAddress", defaultValue = "http://localhost:8080/")
    URI baseURI;
 
-   @ConfigProperty(name="ivoa.tap.useTapTypesInVOSI", defaultValue = "true")
+   @ConfigProperty(name="ivoa.tap.useTapTypesInVOSI", defaultValue = "false")
    boolean useTapTypesInVOSI;
 
 
