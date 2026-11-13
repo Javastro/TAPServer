@@ -27,8 +27,8 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @QuarkusTest
 public class QueryTest extends AbstractTAPTest {
-   private static final String ASYNC_ENDPOINT = "/async";
-   private static final String SYNC_ENDPOINT = "/sync";
+   public static final String ASYNC_ENDPOINT = "/tap/async";
+   public static final String SYNC_ENDPOINT = "/tap/sync";
    @Test
    public void testAsyncQuery() {
       Response createResponse = given()

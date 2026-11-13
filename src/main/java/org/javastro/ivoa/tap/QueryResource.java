@@ -19,11 +19,14 @@ import org.javastro.ivoa.quarkus.tap.TAPHelper;
  * This works by creating an asynchronous job and then waiting for it to complete,
  * returning the result if it does complete within a reasonable time, or an error VOTable if it doesn't.
  * The client can then poll the async endpoint if they want to wait longer.
+ *
+ * note that this must share the same resource path root as the async endpoint {@link AsyncQueryResource} for tap compliance
+ *
  * Created on 04/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
  */
 @Tag(name = "TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
-@Path("sync")
+@Path("/tap/sync")
 public class QueryResource extends BaseSyncTAPResource {
 
    @ConfigProperty(name="ivoa.tap.sync-timeout-seconds", defaultValue = "5")

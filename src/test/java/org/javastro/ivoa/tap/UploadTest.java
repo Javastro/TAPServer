@@ -10,6 +10,8 @@ import java.util.Objects;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.javastro.ivoa.tap.QueryTest.ASYNC_ENDPOINT;
+import static org.javastro.ivoa.tap.QueryTest.SYNC_ENDPOINT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
@@ -29,7 +31,7 @@ public class UploadTest extends AbstractTAPTest {
                     .multiPart("UPLOAD", "mytable,param:mytableFile")
                     .multiPart("mytableFile", votable, "application/x-votable+xml")
                     .when()
-                    .post("/sync")
+                    .post(SYNC_ENDPOINT)
                     .then()
                     .statusCode(200);
         } catch (URISyntaxException e) {
@@ -48,14 +50,14 @@ public class UploadTest extends AbstractTAPTest {
                   .multiPart("mytableFile", votable, "application/x-votable+xml")
                   .redirects().follow(false)
                   .when()
-                  .post("/async")
+                  .post(ASYNC_ENDPOINT)
                   .then()
                   .statusCode(303)
                   .header("Location", notNullValue())
                   .extract().response();
             String jobFullUrl = createResponse.getHeader("Location");
             String jobId = jobFullUrl.substring(jobFullUrl.lastIndexOf('/') + 1);
-            String jobUrl = "/async/"+jobId;
+            String jobUrl = ASYNC_ENDPOINT+"/"+jobId;
 
             System.out.println(jobFullUrl);
             startAndTestJob(jobUrl);
@@ -74,7 +76,7 @@ public class UploadTest extends AbstractTAPTest {
                 .multiPart("QUERY", "SELECT * FROM mytable")
                 .multiPart("UPLOAD", "mytable," + REMOTE_FILE_URL)
                 .when()
-                .post("/sync")
+                .post(SYNC_ENDPOINT)
                 .then()
                 .statusCode(200);
     }
@@ -82,7 +84,7 @@ public class UploadTest extends AbstractTAPTest {
     //Test a remote file upload using GET
     @Test
     public void testGetRemoteUpload() {
-        given().get("/sync?QUERY=select%20*%20from%20table3&UPLOAD=table3," + REMOTE_FILE_URL)
+        given().get(SYNC_ENDPOINT + "?QUERY=select%20*%20from%20table3&UPLOAD=table3," + REMOTE_FILE_URL)
                 .then()
                 .statusCode(200);
     }

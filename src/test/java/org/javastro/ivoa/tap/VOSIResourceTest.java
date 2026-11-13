@@ -20,7 +20,7 @@ class VOSIResourceTest {
     @Test
     void testCapabilitiesEndpoint() {
        String caps = given()
-             .when().get("/VOSI/capabilities")
+             .when().get("/tap/capabilities")
              .then()
              .statusCode(200)
              .body("capabilities.capability.size()",equalTo(4))
@@ -42,7 +42,7 @@ class VOSIResourceTest {
    @Test
    void testAvailabilityEndpoint() {
       given()
-            .when().get("/VOSI/availability")
+            .when().get("/tap/availability")
             .then()
             .statusCode(200)
       ;
@@ -51,7 +51,7 @@ class VOSIResourceTest {
    @Test
    void testTablesEndpoint() {
      String tables =  given()
-            .when().get("/tables")
+            .when().get("/tap/tables")
             .then()
             .statusCode(200)
             .log().body()

@@ -13,6 +13,7 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.persistence.EntityManager;
+import jakarta.ws.rs.core.UriBuilder;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.javastro.ivoa.entities.resource.Capability;
 import org.javastro.ivoa.entities.vosi.capabilities.Capabilities;
@@ -66,17 +67,20 @@ public class TapConfiguration {
    @ConfigProperty(name="ivoa.baseAddress", defaultValue = "http://localhost:8080/")
    URI baseURI;
 
-   @ConfigProperty(name="ivoa.tap.useTapTypesInVOSI", defaultValue = "false")
+   @ConfigProperty(name="ivoa.tap.useTapTypesInVOSI", defaultValue = "false") // IMPL actually TAP types should never be used in VOSI
    boolean useTapTypesInVOSI;
 
 
+   // this is used by TAP to know its own base
    @Produces
    @Singleton
    ServiceLocator serviceLocator() {
+      //This should be the base for the tap resources (sync, async, tables)
+      final URI tapbase =  UriBuilder.fromUri(baseURI).path("tap").build();
       return new ServiceLocator() {
          @Override
          public URI serviceURI() {
-            return baseURI;
+            return tapbase;
          }
       };
    }
@@ -89,10 +93,10 @@ public class TapConfiguration {
          public Capabilities getCapabilities() {
             URL url = null;
             try {
-               url = new URL(baseURI.toURL(), "VOSI");//IMPL - this needs to be the same as the root in {@see org.javastro.ivoa.tap.VOSIResource }
+               url = new URL(baseURI.toURL(), "tap/");// note needs to end with /
                // standard VOSI ones
                final List<Capability> capabilities = CapabilityBuilder.createVOSICapabilities(url);
-               capabilities.addAll(CapabilityBuilder.createTAPCapabilities(baseURI.toURL(),
+               capabilities.addAll(CapabilityBuilder.createTAPCapabilities(url,
                      tapExecutionPolicy.maxRec(), tapExecutionPolicy.getDefaultLifetime(),
                      tapExecutionPolicy.getMaxLifetime(),
                      tapExecutionPolicy.getMaxRunTime()));

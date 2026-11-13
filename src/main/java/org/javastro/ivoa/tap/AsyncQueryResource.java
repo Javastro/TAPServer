@@ -15,11 +15,14 @@ import org.javastro.ivoa.quarkus.tap.TAPHelper;
 
 /**
  * Main Async TAP Query.
+ *
+ *  note that this must share the same resource path root as the async endpoint {@link QueryResource} for tap compliance
+ *
  * Created on 04/03/2026 by Paul Harrison (paul.harrison@manchester.ac.uk).
  */
 @Tag(name="TAP Query", description = "the TAP query endpoints")
 @ApplicationScoped
-@Path("async")
+@Path("/tap/async/")
 public class AsyncQueryResource extends BaseAsyncTAPResource {
 
    @Inject
