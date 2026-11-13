@@ -3,10 +3,9 @@ plugins {
 }
 
 dependencies {
-    implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.2-SNAPSHOT")
+    implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.2")
     implementation("org.javastro.ivoa.core.quarkus:quarkus-uws:0.9.0")
-    implementation("org.javastro.ivoa.core:tap:0.9.4-SNAPSHOT")
-    implementation("org.javastro.ivoa.core:dal:0.9.2")
+    implementation("org.javastro.ivoa.core:dal:0.9.3")
 
     implementation("org.javastro.ivoa.core:pgsphere:0.9.2")
     implementation("org.javastro.ivoa.dm:DemoDM:0.2")
@@ -29,7 +28,6 @@ dependencies {
         implementation("org.javastro.ivoa:ivoa-entities:0.9.15") {
             because("previous version had h2db in dependencies, which is not needed and causes problems with quarkus native-executable")
         }
-        implementation("org.javastro.ivoa.dm:tapschema:0.9.15-SNAPSHOT")
 
 
     }
@@ -51,8 +49,11 @@ tasks.withType<JavaCompile> {
 
 }
 
+tasks.named<Javadoc>("javadoc") {
+    exclude("org/javastro/ivoa/tap/entities/**")
+}
+
 // should not be needed https://github.com/quarkusio/quarkus/discussions/40427 https://github.com/quarkusio/quarkus/issues/38996
 //tasks.named<JavaCompile>("compileJava") {
 //    dependsOn(tasks.named("compileQuarkusGeneratedSourcesJava"))
 //}
-
