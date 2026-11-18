@@ -38,27 +38,27 @@ replicas. Plan storage, cleanup and scaling accordingly.
 Packaging options
 -----------------
 
-* **Development:** ``./gradlew quarkusDev`` enables live reload and the dev
-  UI. Dev Services can start the configured PostgreSQL/pgSphere image; this
-  mode is not a production deployment.
-* **JVM fast jar:** ``./gradlew build`` creates
+The application can be packaged in several ways
+
+Jar with runner
+^^^^^^^^^^^^^^^
+
+ **JVM fast jar:** ``./gradlew build`` creates
   ``build/quarkus-app/quarkus-run.jar``. Deploy the entire
   ``build/quarkus-app`` directory, not just the runner, and run
   ``java -jar build/quarkus-app/quarkus-run.jar``.
 * **JVM uber jar:** ``./gradlew build -Dquarkus.package.jar.type=uber-jar``
   creates a runner jar in ``build/``; run it with ``java -jar``.
-* **Native:** ``./gradlew build -Dquarkus.native.enabled=true`` requires a
-  compatible native-image toolchain. Add
-  ``-Dquarkus.native.container-build=true`` to build in a container instead.
-  Run the resulting ``build/*-runner`` executable; its name includes the
-  project version.
-* **Containers:** after a fast-jar build, use
-  ``docker build -f src/main/docker/Dockerfile.jvm -t tap-server:jvm .``.
-  After a native build, use
-  ``docker build -f src/main/docker/Dockerfile.native -t tap-server:native .``.
-  The repository also contains legacy-jar and native-micro Dockerfiles; use
-  the package type and prerequisites described in each file. Supply network,
-  configuration and secrets explicitly when running an image.
+
+
+Container
+^^^^^^^^^^
+
+The project is set up to produce a container image via Docker build. The container will run a JVM and the application in it. The image can be built with:
+
+.. code-block:: sh
+
+   ./gradlew build -Dquarkus.container-image.build=true
 
 For example, after provisioning a database and production configuration:
 
@@ -69,13 +69,28 @@ For example, after provisioning a database and production configuration:
      -e QUARKUS_DATASOURCE_USERNAME=tap \
      -e QUARKUS_DATASOURCE_PASSWORD="$DB_PASSWORD" \
      -e IVOA_BASEADDRESS=https://tap.example.org/ \
-     tap-server:jvm
+     images.dev.uksrc.org/javastro/tap-server:0.10.1
 
 The database hostname must resolve from inside the container. Provide the
 production schema settings above through a mounted configuration file or
 other Quarkus configuration source; the command alone does not make the
 example configuration production-safe. Environment variables can be visible
 to container administrators; use your platform's secret mechanism.
+
+Native Image
+^^^^^^^^^^^^
+
+See also the `quarkus guide <https://quarkus.io/guides/building-native-image/>`_ for some
+pre-requisites
+
+.. code-block:: sh
+
+   ./gradlew build -x test -Dquarkus.container-image.build=true -Dquarkus.package.jar.enabled=false
+
+which will produce an executable in ``build/tap-server-0.10.1-runner``.
+The native image can be run directly or packaged in a container.
+
+
 
 Kubernetes and Helm
 -------------------

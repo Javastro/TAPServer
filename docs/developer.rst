@@ -113,6 +113,25 @@ returned VOTable contains a successful query result. The repository's
 
 
 
+Native Build Preparation
+------------------------
+
+See `Quarkus Native Build <https://quarkus.io/guides/building-native-image>`_ for some guidance on building a native image.
+Because the tap server is complex there also needs to be consideration from `native build tips <https://quarkus.io/guides/writing-native-applications-tips/>`_.
+The necessary registrations have been made in ``org.javastro.ivoa.tap.RegisterForReflection``
+
+
+
+
+Note - sampling below did not work
+
+.. code-block:: sh
+
+    $GRAALVM_HOME/bin/java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image  -jar build/quarkus-app/quarkus-run.jar
+
+
+and exercising the application a bit. Note that the files need to be in a further sub-directory ``src/main/resources/META-INF/native-image/<group-id>/<artifact-id>``. The files in this directory are then used to build the native image with the command below
+
 
 .. note::
 

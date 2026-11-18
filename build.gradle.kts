@@ -6,6 +6,7 @@ dependencies {
     implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.2")
     implementation("org.javastro.ivoa.core.quarkus:quarkus-uws:0.9.0")
     implementation("org.javastro.ivoa.core:dal:0.9.3")
+    implementation("org.javastro.ivoa.core:uws:0.9.4-SNAPSHOT")
 
     implementation("org.javastro.ivoa.core:pgsphere:0.9.2")
     implementation("org.javastro.ivoa.dm:DemoDM:0.2")
