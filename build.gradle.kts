@@ -2,11 +2,12 @@ plugins {
     id("org.javastro.build.module.quarkus-app")
 }
 
+// FIXME problem with quarkus 3.40 lts gradle > 9.5 don't do it yet...  https://github.com/quarkusio/quarkus/issues/57946
 dependencies {
     implementation("org.javastro.ivoa.core.quarkus:quarkus-tap-lib:0.9.2")
     implementation("org.javastro.ivoa.core.quarkus:quarkus-uws:0.9.0")
-    implementation("org.javastro.ivoa.core:dal:0.9.3")
-    implementation("org.javastro.ivoa.core:uws:0.9.4-SNAPSHOT")
+    implementation("org.javastro.ivoa.core:dal:0.9.4")
+    implementation("org.javastro.ivoa.core:tap:0.9.5")
 
     implementation("org.javastro.ivoa.core:pgsphere:0.9.2")
     implementation("org.javastro.ivoa.dm:DemoDM:0.2")
@@ -39,11 +40,6 @@ group = "org.javastro.ivoa.servers"
 
 
 
-
-
-tasks.withType<Test> {
-    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
-}
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
